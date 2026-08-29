@@ -120,13 +120,13 @@
 
 <script>
 const coinsList = [
+    { symbol: 'ADA', name: 'Cardano', geckoId: 'cardano' },
+    { symbol: 'POL', name: 'Polygon', geckoId: 'polygon-ecosystem-token' },
     { symbol: 'BTC', name: 'Bitcoin', geckoId: 'bitcoin' },
     { symbol: 'ETH', name: 'Ethereum', geckoId: 'ethereum' },
     { symbol: 'XRP', name: 'Ripple', geckoId: 'ripple' },
     { symbol: 'SOL', name: 'Solana', geckoId: 'solana' },
     { symbol: 'DOT', name: 'Polkadot', geckoId: 'polkadot' },
-    { symbol: 'POL', name: 'Polygon', geckoId: 'polygon-ecosystem-token' },
-    { symbol: 'ADA', name: 'Cardano', geckoId: 'cardano' },
     { symbol: 'UNI', name: 'Uniswap', geckoId: 'uniswap' },
     { symbol: 'LTC', name: 'Litecoin', geckoId: 'litecoin' },
     { symbol: 'BCH', name: 'Bitcoin Cash', geckoId: 'bitcoin-cash' }
@@ -136,7 +136,7 @@ let cryptoData = {};
 let usdToMyr = 4.45; 
 let currentTimeframe = '24h';
 
-// Penetapan ADA dan POL sebagai pilihan utama (Default)
+// Tetapan Default: ADA -> POL
 function initDropdowns() {
     const fromSelect = document.getElementById('fromCoin');
     const toSelect = document.getElementById('toCoin');
@@ -154,6 +154,7 @@ async function fetchMarketData() {
     const syncEl = document.getElementById('syncStatus');
     syncEl.innerText = 'Mengemas kini...';
 
+    // 1. Dapatkan kadar USD ke MYR
     try {
         const myrRes = await fetch('https://open.er-api.com/v6/latest/USD');
         const myrData = await myrRes.json();
@@ -165,6 +166,7 @@ async function fetchMarketData() {
         document.getElementById('myrRateDisplay').innerText = `RM ${usdToMyr.toFixed(2)}`;
     }
 
+    // 2. Dapatkan data 10 Kripto dari CoinGecko
     try {
         const ids = coinsList.map(c => c.geckoId).join(',');
         const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&price_change_percentage=24h,7d`);
@@ -178,7 +180,6 @@ async function fetchMarketData() {
                 const priceUSD = item.current_price || 0;
                 const change24h = item.price_change_percentage_24h_in_currency ?? item.price_change_percentage_24h ?? 0;
                 const change7d = item.price_change_percentage_7d_in_currency ?? 0;
-                
                 const change3d = (change24h * 0.4) + (change7d * 0.6);
 
                 cryptoData[coin.symbol] = {
