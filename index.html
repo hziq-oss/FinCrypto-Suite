@@ -136,13 +136,17 @@ let cryptoData = {};
 let usdToMyr = 4.45; 
 let currentTimeframe = '24h';
 
+// Penetapan ADA dan POL sebagai pilihan utama (Default)
 function initDropdowns() {
     const fromSelect = document.getElementById('fromCoin');
     const toSelect = document.getElementById('toCoin');
     
-    coinsList.forEach((coin, idx) => {
-        fromSelect.add(new Option(`${coin.symbol} - ${coin.name}`, coin.symbol, idx === 0, idx === 0));
-        toSelect.add(new Option(`${coin.symbol} - ${coin.name}`, coin.symbol, idx === 1, idx === 1));
+    coinsList.forEach((coin) => {
+        const isDefaultFrom = coin.symbol === 'ADA';
+        const isDefaultTo = coin.symbol === 'POL';
+
+        fromSelect.add(new Option(`${coin.symbol} - ${coin.name}`, coin.symbol, isDefaultFrom, isDefaultFrom));
+        toSelect.add(new Option(`${coin.symbol} - ${coin.name}`, coin.symbol, isDefaultTo, isDefaultTo));
     });
 }
 
@@ -150,7 +154,6 @@ async function fetchMarketData() {
     const syncEl = document.getElementById('syncStatus');
     syncEl.innerText = 'Mengemas kini...';
 
-    // 1. Dapatkan kadar pertukaran USD ke MYR
     try {
         const myrRes = await fetch('https://open.er-api.com/v6/latest/USD');
         const myrData = await myrRes.json();
@@ -162,7 +165,6 @@ async function fetchMarketData() {
         document.getElementById('myrRateDisplay').innerText = `RM ${usdToMyr.toFixed(2)}`;
     }
 
-    // 2. Ambil data 10 kripto dari CoinGecko (Single Call)
     try {
         const ids = coinsList.map(c => c.geckoId).join(',');
         const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&price_change_percentage=24h,7d`);
@@ -177,7 +179,6 @@ async function fetchMarketData() {
                 const change24h = item.price_change_percentage_24h_in_currency ?? item.price_change_percentage_24h ?? 0;
                 const change7d = item.price_change_percentage_7d_in_currency ?? 0;
                 
-                // Anggaran 3 Hari (berdasarkan purata 24j & 7d)
                 const change3d = (change24h * 0.4) + (change7d * 0.6);
 
                 cryptoData[coin.symbol] = {
@@ -262,12 +263,10 @@ function renderTrends() {
     });
 }
 
-// Inisialisasi
 initDropdowns();
 fetchMarketData();
 setInterval(fetchMarketData, 30000);
 
-// Pendaftaran Service Worker untuk PWA
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js');
