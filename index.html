@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Crypto Converter & Analytics</title>
+    <!-- PWA Link & Theme Color -->
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0f19">
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
+        body { background: #0b0f19; color: #f8fafc; min-height: 100vh; padding: 20px; display: flex; justify-content: center; align-items: center; }
+        
+        .container { background: #161e2e; border: 1px solid #243044; width: 100%; max-width: 500px; border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+        
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { font-size: 22px; color: #38bdf8; text-transform: uppercase; letter-spacing: 1.5px; }
+        .header p { font-size: 12px; color: #64748b; margin-top: 4px; }
+
+        .status-bar { display: flex; justify-content: space-between; font-size: 11px; background: #0f172a; padding: 8px 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #1e293b; color: #94a3b8; }
+        .status-dot { height: 8px; width: 8px; background-color: #22c55e; border-radius: 50%; display: inline-block; margin-right: 5px; }
+
+        .converter-box { display: flex; flex-direction: column; gap: 12px; position: relative; }
+        
+        .input-group { background: #0f172a; border: 1px solid #1e293b; border-radius: 14px; padding: 14px; transition: 0.2s; }
+        .input-group:focus-within { border-color: #38bdf8; }
+        .input-label { font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 6px; display: block; }
+        
+        .input-row { display: flex; gap: 10px; align-items: center; }
+        input[type="number"] { flex: 1; background: transparent; border: none; color: #fff; font-size: 22px; font-weight: bold; font-family: monospace; outline: none; width: 100%; }
+        select { background: #1e293b; color: #fff; border: 1px solid #334155; border-radius: 8px; padding: 8px 12px; font-size: 14px; font-weight: bold; outline: none; cursor: pointer; }
+
+        .swap-btn-container { text-align: center; margin: -6px 0; z-index: 2; }
+        .swap-btn { background: #38bdf8; border: none; color: #0b0f19; width: 36px; height: 36px; border-radius: 50%; font-size: 16px; cursor: pointer; font-weight: bold; box-shadow: 0 0 10px rgba(56, 189, 248, 0.4); transition: transform 0.2s; }
+        .swap-btn:hover { transform: rotate(180deg); }
+
+        .price-overview { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 18px; }
+        .val-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 12px; }
+        .val-title { font-size: 10px; color: #64748b; text-transform: uppercase; font-weight: bold; }
+        .val-num { font-size: 15px; font-weight: bold; color: #f8fafc; font-family: monospace; margin-top: 4px; }
+
+        .trends-box { background: #0f172a; border: 1px solid #1e293b; border-radius: 14px; padding: 14px; margin-top: 18px; }
+        .trends-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .trends-title { font-size: 12px; color: #94a3b8; font-weight: bold; text-transform: uppercase; }
+        
+        .timeframe-selector { display: flex; gap: 4px; background: #1e293b; padding: 3px; border-radius: 8px; }
+        .tf-btn { background: transparent; border: none; color: #94a3b8; padding: 4px 8px; font-size: 10px; font-weight: bold; border-radius: 6px; cursor: pointer; }
+        .tf-btn.active { background: #38bdf8; color: #0b0f19; }
+
+        .trend-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+        .trend-item { background: #161e2e; border: 1px solid #243044; border-radius: 8px; padding: 8px 10px; display: flex; justify-content: space-between; align-items: center; }
+        .trend-symbol { font-size: 12px; font-weight: bold; }
+        .trend-val { font-size: 12px; font-weight: bold; font-family: monospace; }
+        
+        .positive { color: #4ade80; }
+        .negative { color: #f87171; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>Crypto Converter</h1>
+        <p>Pertukaran Kripto, Nilai USD/MYR & Analisis Peratusan</p>
+    </div>
+
+    <div class="status-bar">
+        <div><span class="status-dot"></span> Status: <span id="syncStatus">Memuatkan data...</span></div>
+        <div>USD/MYR: <span id="myrRateDisplay">RM --</span></div>
+    </div>
+
+    <div class="converter-box">
+        <div class="input-group">
+            <span class="input-label">Daripada (From)</span>
+            <div class="input-row">
+                <input type="number" id="fromAmount" value="1" oninput="convert()">
+                <select id="fromCoin" onchange="convert()"></select>
+            </div>
+        </div>
+
+        <div class="swap-btn-container">
+            <button class="swap-btn" onclick="swapCoins()">⇄</button>
+        </div>
+
+        <div class="input-group">
+            <span class="input-label">Kepada (To)</span>
+            <div class="input-row">
+                <input type="number" id="toAmount" readonly placeholder="0.00">
+                <select id="toCoin" onchange="convert()"></select>
+            </div>
+        </div>
+    </div>
+
+    <div class="price-overview">
+        <div class="val-card">
+            <div class="val-title">Nilai Anggaran (USD)</div>
+            <div class="val-num" id="usdVal">$ 0.00</div>
+        </div>
+        <div class="val-card">
+            <div class="val-title">Nilai Anggaran (MYR)</div>
+            <div class="val-num" id="myrVal">RM 0.00</div>
+        </div>
+    </div>
+
+    <div class="trends-box">
+        <div class="trends-header">
+            <span class="trends-title">Prestasi Harga (%)</span>
+            <div class="timeframe-selector">
+                <button class="tf-btn active" onclick="setTimeframe('24h', this)">24H</button>
+                <button class="tf-btn" onclick="setTimeframe('3d', this)">3 Hari</button>
+                <button class="tf-btn" onclick="setTimeframe('7d', this)">1 Minggu</button>
+            </div>
+        </div>
+        <div class="trend-grid" id="trendGrid"></div>
+    </div>
+</div>
+
+<script>
+const coinsList = [
+    { symbol: 'BTC', name: 'Bitcoin', binance: 'BTCUSDT' },
+    { symbol: 'ETH', name: 'Ethereum', binance: 'ETHUSDT' },
+    { symbol: 'XRP', name: 'Ripple', binance: 'XRPUSDT' },
+    { symbol: 'SOL', name: 'Solana', binance: 'SOLUSDT' },
+    { symbol: 'DOT', name: 'Polkadot', binance: 'DOTUSDT' },
+    { symbol: 'POL', name: 'Polygon', binance: 'POLUSDT' },
+    { symbol: 'ADA', name: 'Cardano', binance: 'ADAUSDT' },
+    { symbol: 'UNI', name: 'Uniswap', binance: 'UNIUSDT' },
+    { symbol: 'LTC', name: 'Litecoin', binance: 'LTCUSDT' },
+    { symbol: 'BCH', name: 'Bitcoin Cash', binance: 'BCHUSDT' }
+];
+
+let cryptoData = {};
+let usdToMyr = 4.45; 
+let currentTimeframe = '24h';
+
+function initDropdowns() {
+    const fromSelect = document.getElementById('fromCoin');
+    const toSelect = document.getElementById('toCoin');
+    
+    coinsList.forEach((coin, idx) => {
+        fromSelect.add(new Option(`${coin.symbol} - ${coin.name}`, coin.symbol, idx === 0, idx === 0));
+        toSelect.add(new Option(`${coin.symbol} - ${coin.name}`, coin.symbol, idx === 1, idx === 1));
+    });
+}
+
+async function fetchMarketData() {
+    try {
+        const myrRes = await fetch('https://open.er-api.com/v6/latest/USD');
+        const myrData = await myrRes.json();
+        if (myrData && myrData.rates && myrData.rates.MYR) {
+            usdToMyr = myrData.rates.MYR;
+            document.getElementById('myrRateDisplay').innerText = `RM ${usdToMyr.toFixed(2)}`;
+        }
+
+        for (const coin of coinsList) {
+            const res = await fetch(`https://api.binance.com/api/v3/klines?symbol=${coin.binance}&interval=1d&limit=8`);
+            const data = await res.json();
+            
+            if (Array.isArray(data) && data.length >= 8) {
+                const currentPrice = parseFloat(data[data.length - 1][4]);
+                const price24hAgo = parseFloat(data[data.length - 2][4]);
+                const price3dAgo = parseFloat(data[data.length - 4][4]);
+                const price7dAgo = parseFloat(data[0][4]);
+
+                cryptoData[coin.symbol] = {
+                    priceUSD: currentPrice,
+                    change24h: ((currentPrice - price24hAgo) / price24hAgo) * 100,
+                    change3d: ((currentPrice - price3dAgo) / price3dAgo) * 100,
+                    change7d: ((currentPrice - price7dAgo) / price7dAgo) * 100
+                };
+            }
+        }
+        
+        document.getElementById('syncStatus').innerText = 'Dikemas kini';
+        convert();
+        renderTrends();
+    } catch (err) {
+        console.error(err);
+        document.getElementById('syncStatus').innerText = 'Ralat API';
+    }
+}
+
+function convert() {
+    const fromSymbol = document.getElementById('fromCoin').value;
+    const toSymbol = document.getElementById('toCoin').value;
+    const amount = parseFloat(document.getElementById('fromAmount').value) || 0;
+
+    if (!cryptoData[fromSymbol] || !cryptoData[toSymbol]) return;
+
+    const fromPrice = cryptoData[fromSymbol].priceUSD;
+    const toPrice = cryptoData[toSymbol].priceUSD;
+
+    const totalUSD = amount * fromPrice;
+    const totalMYR = totalUSD * usdToMyr;
+    const convertedAmount = totalUSD / toPrice;
+
+    document.getElementById('toAmount').value = convertedAmount < 0.0001 ? convertedAmount.toFixed(6) : convertedAmount.toFixed(4);
+    document.getElementById('usdVal').innerText = `$ ${totalUSD.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+    document.getElementById('myrVal').innerText = `RM ${totalMYR.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+}
+
+function swapCoins() {
+    const fromSelect = document.getElementById('fromCoin');
+    const toSelect = document.getElementById('toCoin');
+    
+    const temp = fromSelect.value;
+    fromSelect.value = toSelect.value;
+    toSelect.value = temp;
+    
+    convert();
+}
+
+function setTimeframe(tf, btn) {
+    currentTimeframe = tf;
+    document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    renderTrends();
+}
+
+function renderTrends() {
+    const grid = document.getElementById('trendGrid');
+    grid.innerHTML = '';
+
+    coinsList.forEach(coin => {
+        const data = cryptoData[coin.symbol];
+        if (!data) return;
+
+        let changeVal = 0;
+        if (currentTimeframe === '24h') changeVal = data.change24h;
+        if (currentTimeframe === '3d') changeVal = data.change3d;
+        if (currentTimeframe === '7d') changeVal = data.change7d;
+
+        const isPos = changeVal >= 0;
+        const formattedChange = (isPos ? '+' : '') + changeVal.toFixed(2) + '%';
+        const colorClass = isPos ? 'positive' : 'negative';
+
+        const item = document.createElement('div');
+        item.className = 'trend-item';
+        item.innerHTML = `
+            <span class="trend-symbol">${coin.symbol}</span>
+            <span class="trend-val ${colorClass}">${formattedChange}</span>
+        `;
+        grid.appendChild(item);
+    });
+}
+
+// Inisialisasi
+initDropdowns();
+fetchMarketData();
+setInterval(fetchMarketData, 30000);
+
+// Pendaftaran Service Worker untuk Kebolehpasangan (PWA)
+if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+        navigator.serviceWorker.register('sw.js');
+    });
+}
+</script>
+
+</body>
+</html>
