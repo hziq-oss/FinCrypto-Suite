@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinCrypto Suite - Performance Ranking</title>
+    <title>FinCrypto Suite - Performance & Value Ranking</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b0f19">
     <style>
@@ -44,7 +44,8 @@
 
         .crypto-value { text-align: right; }
         .converted-amount { font-size: 15px; font-weight: bold; color: #f8fafc; font-family: monospace; }
-        .growth-badge { font-size: 12px; font-weight: bold; margin-top: 3px; font-family: monospace; }
+        .fiat-value { font-size: 11px; color: #38bdf8; font-weight: 600; margin-top: 2px; }
+        .growth-badge { font-size: 11px; font-weight: bold; margin-top: 2px; font-family: monospace; }
         .positive { color: #4ade80; }
         .negative { color: #f87171; }
 
@@ -58,7 +59,7 @@
 <div class="container">
     <div class="header">
         <h1>FinCrypto Suite</h1>
-        <p>Ranking Prestasi Tukaran Kripto (%)</p>
+        <p>Ranking Prestasi &amp; Penukaran Nilai Kripto</p>
     </div>
 
     <div class="status-bar">
@@ -154,7 +155,6 @@ async function fetchMarketData() {
             if (coin) {
                 const change24h = item.price_change_percentage_24h_in_currency ?? item.price_change_percentage_24h ?? 0;
                 const change7d = item.price_change_percentage_7d_in_currency ?? 0;
-                // Anggaran 3 hari menggunakan purata wajaran (weighted average)
                 const change3d = (change24h * 0.4) + (change7d * 0.6);
 
                 marketData[coin.symbol] = {
@@ -204,8 +204,7 @@ function kiraTukaran() {
             const targetPriceUSD = targetData.priceUSD;
             const targetChange = targetData[`change${currentTimeframe}`];
 
-            // Formula Pertumbuhan Pertukaran Nisbah (Relative Growth Ratio %):
-            // ((1 + %Perubahan Base) / (1 + %Perubahan Target) - 1) * 100
+            // Formula Pertumbuhan Pertukaran Nisbah (%):
             const relativeGrowth = (((1 + (baseChange / 100)) / (1 + (targetChange / 100))) - 1) * 100;
             
             const convertedAmount = totalUSD / targetPriceUSD;
@@ -221,7 +220,7 @@ function kiraTukaran() {
         }
     });
 
-    // Susun mengikut Keuntungan Pertumbuhan Nisbah (%) terbanyak di atas (Paling Berbaloi)
+    // Susun mengikut Keuntungan Pertumbuhan Nisbah (%) terbanyak di atas
     results.sort((a, b) => b.relativeGrowth - a.relativeGrowth);
 
     resultList.innerHTML = '';
@@ -239,6 +238,7 @@ function kiraTukaran() {
                 </div>
                 <div class="crypto-value">
                     <div class="converted-amount">${item.convertedAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})} ${item.symbol}</div>
+                    <div class="fiat-value">≈ $${totalUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD / RM ${totalMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                     <div class="growth-badge ${colorClass}">${growthFormatted} Nisbah (${currentTimeframe.toUpperCase()})</div>
                 </div>
             </div>
@@ -249,7 +249,7 @@ function kiraTukaran() {
 
 initDropdown();
 fetchMarketData();
-setInterval(fetchMarketData, 60000); // Kemaskini setiap 1 minit untuk elak API Rate Limit
+setInterval(fetchMarketData, 60000);
 
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
