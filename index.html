@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinCrypto Suite</title>
+    <title>FinCrypto Suite - Performance Ranking</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b0f19">
     <style>
@@ -18,7 +18,7 @@
         .status-bar { display: flex; justify-content: space-between; font-size: 11px; background: #0f172a; padding: 8px 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #1e293b; color: #94a3b8; }
         .status-dot { height: 8px; width: 8px; background-color: #22c55e; border-radius: 50%; display: inline-block; margin-right: 5px; }
         
-        .input-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 14px; padding: 16px; margin-bottom: 20px; }
+        .input-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
         .form-group { margin-bottom: 12px; }
         .form-group:last-child { margin-bottom: 0; }
         label { display: block; font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 6px; }
@@ -26,24 +26,30 @@
         input[type="number"], select { width: 100%; background: #161e2e; border: 1px solid #243044; color: #fff; padding: 12px; border-radius: 8px; font-size: 15px; outline: none; transition: 0.2s; }
         input[type="number"]:focus, select:focus { border-color: #38bdf8; }
 
-        .section-title { font-size: 13px; font-weight: bold; color: #94a3b8; margin-bottom: 12px; display: flex; justify-content: space-between; align-items: center; text-transform: uppercase; }
-        .badge { background: #0284c7; color: #fff; font-size: 10px; padding: 3px 8px; border-radius: 12px; }
+        /* Timeframe Selector */
+        .filter-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+        .filter-title { font-size: 12px; font-weight: bold; color: #94a3b8; text-transform: uppercase; }
+        .timeframe-selector { display: flex; gap: 4px; background: #0f172a; padding: 4px; border-radius: 8px; border: 1px solid #1e293b; }
+        .tf-btn { background: transparent; border: none; color: #94a3b8; padding: 6px 12px; font-size: 11px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; }
+        .tf-btn.active { background: #38bdf8; color: #0b0f19; }
 
-        /* Crypto List Card */
+        /* List Items */
         .crypto-list { display: flex; flex-direction: column; gap: 10px; }
         .crypto-item { background: #0f172a; border: 1px solid #1e293b; padding: 14px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s; }
         .crypto-item:hover { transform: translateY(-2px); border-color: #38bdf8; }
         
         .crypto-info { display: flex; flex-direction: column; }
         .crypto-pair { font-size: 15px; font-weight: bold; color: #f8fafc; }
-        .crypto-rate { font-size: 11px; color: #64748b; margin-top: 3px; }
+        .crypto-details { font-size: 11px; color: #64748b; margin-top: 3px; }
 
         .crypto-value { text-align: right; }
-        .converted-amount { font-size: 15px; font-weight: bold; color: #4ade80; font-family: monospace; }
-        .fiat-value { font-size: 11px; color: #38bdf8; font-weight: 600; margin-top: 3px; }
+        .converted-amount { font-size: 15px; font-weight: bold; color: #f8fafc; font-family: monospace; }
+        .growth-badge { font-size: 12px; font-weight: bold; margin-top: 3px; font-family: monospace; }
+        .positive { color: #4ade80; }
+        .negative { color: #f87171; }
 
         .status-msg { text-align: center; color: #64748b; font-size: 13px; margin: 20px 0; }
-        .btn-refresh { width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; transition: background 0.2s; }
+        .btn-refresh { width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; }
         .btn-refresh:hover { background: #0369a1; }
     </style>
 </head>
@@ -52,7 +58,7 @@
 <div class="container">
     <div class="header">
         <h1>FinCrypto Suite</h1>
-        <p>Senarai Tukaran Kripto (Paling Berbaloi → Terendah)</p>
+        <p>Ranking Prestasi Tukaran Kripto (%)</p>
     </div>
 
     <div class="status-bar">
@@ -63,7 +69,7 @@
     <!-- Ruang Input Utama -->
     <div class="input-card">
         <div class="form-group">
-            <label>Daripada (Base Crypto)</label>
+            <label>Pilih Kripto Asal (Base Coin)</label>
             <select id="baseCoin" onchange="kiraTukaran()"></select>
         </div>
         <div class="form-group">
@@ -72,14 +78,19 @@
         </div>
     </div>
 
-    <!-- Senarai Hasil Penukaran -->
-    <div class="section-title">
-        <span>Hasil Penukaran</span>
-        <span class="badge">Disusun Mengikut Nilai</span>
+    <!-- Pilihan Tempoh Masa (Timeframe) -->
+    <div class="filter-box">
+        <span class="filter-title">Prestasi Nisbah</span>
+        <div class="timeframe-selector">
+            <button class="tf-btn active" onclick="setTimeframe('24h', this)">1 Hari</button>
+            <button class="tf-btn" onclick="setTimeframe('3d', this)">3 Hari</button>
+            <button class="tf-btn" onclick="setTimeframe('7d', this)">1 Minggu</button>
+        </div>
     </div>
 
+    <!-- Senarai Hasil Penukaran -->
     <div class="crypto-list" id="cryptoResultList">
-        <div class="status-msg">Mengambil data harga pasaran semasa...</div>
+        <div class="status-msg">Mengambil data pasaran semasa...</div>
     </div>
 
     <button class="btn-refresh" onclick="fetchMarketData()">Kemaskini Harga</button>
@@ -87,8 +98,8 @@
 
 <script>
 const coinsList = [
-    { symbol: 'ADA', name: 'Cardano', geckoId: 'cardano' },
     { symbol: 'POL', name: 'Polygon', geckoId: 'polygon-ecosystem-token' },
+    { symbol: 'ADA', name: 'Cardano', geckoId: 'cardano' },
     { symbol: 'BTC', name: 'Bitcoin', geckoId: 'bitcoin' },
     { symbol: 'ETH', name: 'Ethereum', geckoId: 'ethereum' },
     { symbol: 'XRP', name: 'Ripple', geckoId: 'ripple' },
@@ -99,15 +110,16 @@ const coinsList = [
     { symbol: 'BCH', name: 'Bitcoin Cash', geckoId: 'bitcoin-cash' }
 ];
 
-let cryptoPricesUSD = {};
+let marketData = {};
 let usdToMyr = 4.45; 
+let currentTimeframe = '24h';
 
 function initDropdown() {
     const baseSelect = document.getElementById('baseCoin');
     baseSelect.innerHTML = '';
     
     coinsList.forEach((coin) => {
-        const isDefault = coin.symbol === 'ADA';
+        const isDefault = coin.symbol === 'POL';
         baseSelect.add(new Option(`${coin.symbol} - ${coin.name}`, coin.symbol, isDefault, isDefault));
     });
 }
@@ -117,29 +129,40 @@ async function fetchMarketData() {
     const resultList = document.getElementById('cryptoResultList');
     syncEl.innerText = 'Mengemas kini...';
 
-    // 1. Ambil kadar tukaran USD ke MYR
+    // 1. Ambil kadar USD/MYR
     try {
         const myrRes = await fetch('https://open.er-api.com/v6/latest/USD');
-        const myrData = await myrRes.json();
-        if (myrData && myrData.rates && myrData.rates.MYR) {
-            usdToMyr = myrData.rates.MYR;
-            document.getElementById('myrRateDisplay').innerText = `RM ${usdToMyr.toFixed(2)}`;
+        if (myrRes.ok) {
+            const myrData = await myrRes.json();
+            if (myrData?.rates?.MYR) usdToMyr = myrData.rates.MYR;
         }
     } catch (e) {
-        document.getElementById('myrRateDisplay').innerText = `RM ${usdToMyr.toFixed(2)}`;
+        console.warn('Guna kadar lalai MYR:', e);
     }
+    document.getElementById('myrRateDisplay').innerText = `RM ${usdToMyr.toFixed(2)}`;
 
-    // 2. Ambil harga Kripto dari CoinGecko
+    // 2. Ambil data harga & % perubahan dari CoinGecko
     try {
         const ids = coinsList.map(c => c.geckoId).join(',');
-        const res = await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=usd`);
+        const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&price_change_percentage=24h,7d`);
         
-        if (!res.ok) throw new Error('Ralat API');
+        if (!res.ok) throw new Error('Ralat API CoinGecko');
         const data = await res.json();
 
-        coinsList.forEach(coin => {
-            if (data[coin.geckoId]) {
-                cryptoPricesUSD[coin.symbol] = data[coin.geckoId].usd;
+        data.forEach(item => {
+            const coin = coinsList.find(c => c.geckoId === item.id);
+            if (coin) {
+                const change24h = item.price_change_percentage_24h_in_currency ?? item.price_change_percentage_24h ?? 0;
+                const change7d = item.price_change_percentage_7d_in_currency ?? 0;
+                // Anggaran 3 hari menggunakan purata wajaran (weighted average)
+                const change3d = (change24h * 0.4) + (change7d * 0.6);
+
+                marketData[coin.symbol] = {
+                    priceUSD: item.current_price || 0,
+                    change24h: change24h,
+                    change3d: change3d,
+                    change7d: change7d
+                };
             }
         });
 
@@ -148,8 +171,15 @@ async function fetchMarketData() {
     } catch (err) {
         console.error(err);
         syncEl.innerText = 'Ralat API';
-        resultList.innerHTML = '<div class="status-msg" style="color:#f87171;">Gagal memuatkan harga. Sila cuba lagi.</div>';
+        resultList.innerHTML = '<div class="status-msg" style="color:#f87171;">Gagal mengambil data pasaran. Cuba sebentar lagi.</div>';
     }
+}
+
+function setTimeframe(tf, btn) {
+    currentTimeframe = tf;
+    document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    kiraTukaran();
 }
 
 function kiraTukaran() {
@@ -157,45 +187,59 @@ function kiraTukaran() {
     const amount = parseFloat(document.getElementById('coinAmount').value) || 0;
     const resultList = document.getElementById('cryptoResultList');
 
-    if (!cryptoPricesUSD[baseSymbol]) return;
+    if (!marketData[baseSymbol]) return;
 
-    const basePriceUSD = cryptoPricesUSD[baseSymbol];
+    const basePriceUSD = marketData[baseSymbol].priceUSD;
+    const baseChange = marketData[baseSymbol][`change${currentTimeframe}`];
     const totalUSD = amount * basePriceUSD;
     const totalMYR = totalUSD * usdToMyr;
 
     let results = [];
 
-    // Kira kadar dan jumlah tukaran ke semua token lain
     coinsList.forEach(coin => {
         if (coin.symbol !== baseSymbol) {
-            const targetPriceUSD = cryptoPricesUSD[coin.symbol] || 0;
-            const convertedAmount = targetPriceUSD > 0 ? (totalUSD / targetPriceUSD) : 0;
-            const rate = targetPriceUSD > 0 ? (basePriceUSD / targetPriceUSD) : 0;
+            const targetData = marketData[coin.symbol];
+            if (!targetData || targetData.priceUSD === 0) return;
+
+            const targetPriceUSD = targetData.priceUSD;
+            const targetChange = targetData[`change${currentTimeframe}`];
+
+            // Formula Pertumbuhan Pertukaran Nisbah (Relative Growth Ratio %):
+            // ((1 + %Perubahan Base) / (1 + %Perubahan Target) - 1) * 100
+            const relativeGrowth = (((1 + (baseChange / 100)) / (1 + (targetChange / 100))) - 1) * 100;
+            
+            const convertedAmount = totalUSD / targetPriceUSD;
+            const rate = basePriceUSD / targetPriceUSD;
 
             results.push({
                 symbol: coin.symbol,
                 name: coin.name,
                 convertedAmount: convertedAmount,
-                rate: rate
+                rate: rate,
+                relativeGrowth: relativeGrowth
             });
         }
     });
 
-    // Susun daripada kuantiti hasil terbanyak ke terendah
-    results.sort((a, b) => b.convertedAmount - a.convertedAmount);
+    // Susun mengikut Keuntungan Pertumbuhan Nisbah (%) terbanyak di atas (Paling Berbaloi)
+    results.sort((a, b) => b.relativeGrowth - a.relativeGrowth);
 
     resultList.innerHTML = '';
 
     results.forEach(item => {
+        const isPos = item.relativeGrowth >= 0;
+        const growthFormatted = (isPos ? '+' : '') + item.relativeGrowth.toFixed(2) + '%';
+        const colorClass = isPos ? 'positive' : 'negative';
+
         const itemHTML = `
             <div class="crypto-item">
                 <div class="crypto-info">
                     <div class="crypto-pair">${baseSymbol} → ${item.symbol}</div>
-                    <div class="crypto-rate">1 ${baseSymbol} = ${item.rate.toFixed(6)} ${item.symbol}</div>
+                    <div class="crypto-details">1 ${baseSymbol} = ${item.rate.toFixed(6)} ${item.symbol}</div>
                 </div>
                 <div class="crypto-value">
-                    <div class="converted-amount">${item.convertedAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 6})} ${item.symbol}</div>
-                    <div class="fiat-value">≈ $${totalUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD / RM ${totalMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                    <div class="converted-amount">${item.convertedAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})} ${item.symbol}</div>
+                    <div class="growth-badge ${colorClass}">${growthFormatted} Nisbah (${currentTimeframe.toUpperCase()})</div>
                 </div>
             </div>
         `;
@@ -205,9 +249,8 @@ function kiraTukaran() {
 
 initDropdown();
 fetchMarketData();
-setInterval(fetchMarketData, 30000);
+setInterval(fetchMarketData, 60000); // Kemaskini setiap 1 minit untuk elak API Rate Limit
 
-// PWA Service Worker Registration
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
         navigator.serviceWorker.register('sw.js');
