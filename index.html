@@ -3,13 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinCrypto Suite - Performance & Value Ranking</title>
+    <title>FinCrypto Suite - Performance & Chart</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b0f19">
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
-        body { background: #0b0f19; color: #f8fafc; min-height: 100vh; padding: 20px; display: flex; justify-content: center; align-items: center; }
-        .container { background: #161e2e; border: 1px solid #243044; width: 100%; max-width: 520px; border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+        body { background: #0b0f19; color: #f8fafc; min-height: 100vh; padding: 20px; display: flex; justify-content: center; align-items: center; transition: all 0.3s ease; }
+        
+        /* App Layout Container */
+        .app-wrapper { display: flex; gap: 20px; width: 100%; max-width: 520px; transition: max-width 0.4s ease-in-out; align-items: flex-start; }
+        .app-wrapper.has-chart { max-width: 1100px; }
+
+        /* Left Panel (Main App Container) */
+        .container { background: #161e2e; border: 1px solid #243044; width: 100%; max-width: 520px; border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); flex-shrink: 0; }
         
         .header { text-align: center; margin-bottom: 16px; }
         .header h1 { font-size: 22px; color: #38bdf8; text-transform: uppercase; letter-spacing: 1.5px; }
@@ -35,8 +41,9 @@
 
         /* List Items */
         .crypto-list { display: flex; flex-direction: column; gap: 10px; }
-        .crypto-item { background: #0f172a; border: 1px solid #1e293b; padding: 14px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; transition: transform 0.2s; }
+        .crypto-item { background: #0f172a; border: 1px solid #1e293b; padding: 14px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; cursor: pointer; }
         .crypto-item:hover { transform: translateY(-2px); border-color: #38bdf8; }
+        .crypto-item.selected { border-color: #38bdf8; background: #132238; box-shadow: 0 0 10px rgba(56, 189, 248, 0.2); }
         
         .crypto-info { display: flex; flex-direction: column; }
         .crypto-pair { font-size: 15px; font-weight: bold; color: #f8fafc; }
@@ -52,50 +59,86 @@
         .status-msg { text-align: center; color: #64748b; font-size: 13px; margin: 20px 0; }
         .btn-refresh { width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; }
         .btn-refresh:hover { background: #0369a1; }
+
+        /* Right Panel (Chart Panel) */
+        .chart-panel { background: #161e2e; border: 1px solid #243044; border-radius: 20px; padding: 20px; flex: 1; min-width: 320px; display: none; flex-direction: column; height: 680px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); animation: fadeIn 0.4s ease-in-out; }
+        .app-wrapper.has-chart .chart-panel { display: flex; }
+        
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .chart-title { font-size: 16px; font-weight: bold; color: #38bdf8; }
+        .close-chart-btn { background: #1e293b; border: 1px solid #334155; color: #f8fafc; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; }
+        .close-chart-btn:hover { background: #f87171; border-color: #f87171; color: #fff; }
+        .tradingview-container { width: 100%; flex: 1; border-radius: 12px; overflow: hidden; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateX(20px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Responsive Layout for Mobile */
+        @media (max-width: 850px) {
+            .app-wrapper { flex-direction: column; }
+            .chart-panel { height: 450px; width: 100%; }
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <div class="header">
-        <h1>FinCrypto Suite</h1>
-        <p>Ranking Prestasi &amp; Penukaran Nilai Kripto</p>
-    </div>
-
-    <div class="status-bar">
-        <div><span class="status-dot"></span> Status: <span id="syncStatus">Memuatkan data...</span></div>
-        <div>USD/MYR: <span id="myrRateDisplay">RM --</span></div>
-    </div>
-
-    <!-- Ruang Input Utama -->
-    <div class="input-card">
-        <div class="form-group">
-            <label>Pilih Kripto Asal (Base Coin)</label>
-            <select id="baseCoin" onchange="kiraTukaran()"></select>
+<div class="app-wrapper" id="appWrapper">
+    <!-- Left Main Container -->
+    <div class="container">
+        <div class="header">
+            <h1>FinCrypto Suite</h1>
+            <p>Ranking Prestasi &amp; Penukaran Nilai Kripto</p>
         </div>
-        <div class="form-group">
-            <label>Jumlah Kuantiti</label>
-            <input type="number" id="coinAmount" value="100" min="0.000001" step="any" oninput="kiraTukaran()">
+
+        <div class="status-bar">
+            <div><span class="status-dot"></span> Status: <span id="syncStatus">Memuatkan data...</span></div>
+            <div>USD/MYR: <span id="myrRateDisplay">RM --</span></div>
         </div>
-    </div>
 
-    <!-- Pilihan Tempoh Masa (Timeframe) -->
-    <div class="filter-box">
-        <span class="filter-title">Prestasi Nisbah</span>
-        <div class="timeframe-selector">
-            <button class="tf-btn active" onclick="setTimeframe('24h', this)">1 Hari</button>
-            <button class="tf-btn" onclick="setTimeframe('3d', this)">3 Hari</button>
-            <button class="tf-btn" onclick="setTimeframe('7d', this)">1 Minggu</button>
+        <!-- Ruang Input Utama -->
+        <div class="input-card">
+            <div class="form-group">
+                <label>Pilih Kripto Asal (Base Coin)</label>
+                <select id="baseCoin" onchange="kiraTukaran()"></select>
+            </div>
+            <div class="form-group">
+                <label>Jumlah Kuantiti</label>
+                <input type="number" id="coinAmount" value="100" min="0.000001" step="any" oninput="kiraTukaran()">
+            </div>
         </div>
+
+        <!-- Pilihan Tempoh Masa -->
+        <div class="filter-box">
+            <span class="filter-title">Prestasi Nisbah</span>
+            <div class="timeframe-selector">
+                <button class="tf-btn active" onclick="setTimeframe('24h', this)">1 Hari</button>
+                <button class="tf-btn" onclick="setTimeframe('3d', this)">3 Hari</button>
+                <button class="tf-btn" onclick="setTimeframe('7d', this)">1 Minggu</button>
+            </div>
+        </div>
+
+        <!-- Senarai Hasil Penukaran -->
+        <div class="crypto-list" id="cryptoResultList">
+            <div class="status-msg">Mengambil data pasaran semasa...</div>
+        </div>
+
+        <button class="btn-refresh" onclick="fetchMarketData()">Kemaskini Harga</button>
     </div>
 
-    <!-- Senarai Hasil Penukaran -->
-    <div class="crypto-list" id="cryptoResultList">
-        <div class="status-msg">Mengambil data pasaran semasa...</div>
+    <!-- Right Chart Panel -->
+    <div class="chart-panel" id="chartPanel">
+        <div class="chart-header">
+            <span class="chart-title" id="chartTitle">Graf Pasangan</span>
+            <button class="close-chart-btn" onclick="closeChart()">✕</button>
+        </div>
+        <div class="tradingview-container" id="tvChartContainer"></div>
     </div>
-
-    <button class="btn-refresh" onclick="fetchMarketData()">Kemaskini Harga</button>
 </div>
+
+<!-- TradingView Widget Script -->
+<script type="text/javascript" src="https://s3.tradingview.com/tv.js"></script>
 
 <script>
 const coinsList = [
@@ -114,6 +157,7 @@ const coinsList = [
 let marketData = {};
 let usdToMyr = 4.45; 
 let currentTimeframe = '24h';
+let activeSelectedSymbol = null;
 
 function initDropdown() {
     const baseSelect = document.getElementById('baseCoin');
@@ -130,7 +174,6 @@ async function fetchMarketData() {
     const resultList = document.getElementById('cryptoResultList');
     syncEl.innerText = 'Mengemas kini...';
 
-    // 1. Ambil kadar USD/MYR
     try {
         const myrRes = await fetch('https://open.er-api.com/v6/latest/USD');
         if (myrRes.ok) {
@@ -142,7 +185,6 @@ async function fetchMarketData() {
     }
     document.getElementById('myrRateDisplay').innerText = `RM ${usdToMyr.toFixed(2)}`;
 
-    // 2. Ambil data harga & % perubahan dari CoinGecko
     try {
         const ids = coinsList.map(c => c.geckoId).join(',');
         const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&price_change_percentage=24h,7d`);
@@ -204,9 +246,7 @@ function kiraTukaran() {
             const targetPriceUSD = targetData.priceUSD;
             const targetChange = targetData[`change${currentTimeframe}`];
 
-            // Formula Pertumbuhan Pertukaran Nisbah (%):
             const relativeGrowth = (((1 + (baseChange / 100)) / (1 + (targetChange / 100))) - 1) * 100;
-            
             const convertedAmount = totalUSD / targetPriceUSD;
             const rate = basePriceUSD / targetPriceUSD;
 
@@ -220,7 +260,6 @@ function kiraTukaran() {
         }
     });
 
-    // Susun mengikut Keuntungan Pertumbuhan Nisbah (%) terbanyak di atas
     results.sort((a, b) => b.relativeGrowth - a.relativeGrowth);
 
     resultList.innerHTML = '';
@@ -229,9 +268,10 @@ function kiraTukaran() {
         const isPos = item.relativeGrowth >= 0;
         const growthFormatted = (isPos ? '+' : '') + item.relativeGrowth.toFixed(2) + '%';
         const colorClass = isPos ? 'positive' : 'negative';
+        const isSelected = activeSelectedSymbol === item.symbol ? 'selected' : '';
 
         const itemHTML = `
-            <div class="crypto-item">
+            <div class="crypto-item ${isSelected}" onclick="selectCard('${baseSymbol}', '${item.symbol}', this)">
                 <div class="crypto-info">
                     <div class="crypto-pair">${baseSymbol} → ${item.symbol}</div>
                     <div class="crypto-details">1 ${baseSymbol} = ${item.rate.toFixed(6)} ${item.symbol}</div>
@@ -245,6 +285,47 @@ function kiraTukaran() {
         `;
         resultList.innerHTML += itemHTML;
     });
+
+    if (activeSelectedSymbol) {
+        renderChart(baseSymbol, activeSelectedSymbol);
+    }
+}
+
+function selectCard(baseSymbol, targetSymbol, cardElement) {
+    document.querySelectorAll('.crypto-item').forEach(el => el.classList.remove('selected'));
+    cardElement.classList.add('selected');
+    
+    activeSelectedSymbol = targetSymbol;
+    document.getElementById('appWrapper').classList.add('has-chart');
+    renderChart(baseSymbol, targetSymbol);
+}
+
+function renderChart(baseSymbol, targetSymbol) {
+    document.getElementById('chartTitle').innerText = `Graf Pasangan: ${baseSymbol} / ${targetSymbol}`;
+    document.getElementById('tvChartContainer').innerHTML = '';
+
+    // Standard TradingView Symbol Pair Format
+    let tvPair = `BINANCE:${baseSymbol}${targetSymbol}`;
+    
+    new TradingView.widget({
+        "autosize": true,
+        "symbol": tvPair,
+        "interval": currentTimeframe === '7d' ? 'D' : '60',
+        "timezone": "Etc/UTC",
+        "theme": "dark",
+        "style": "1",
+        "locale": "ms",
+        "toolbar_bg": "#0f172a",
+        "enable_publishing": false,
+        "hide_side_toolbar": false,
+        "container_id": "tvChartContainer"
+    });
+}
+
+function closeChart() {
+    activeSelectedSymbol = null;
+    document.getElementById('appWrapper').classList.remove('has-chart');
+    document.querySelectorAll('.crypto-item').forEach(el => el.classList.remove('selected'));
 }
 
 initDropdown();
