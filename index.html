@@ -67,15 +67,15 @@
         .chart-panel { background: #161e2e; border: 1px solid #243044; border-radius: 20px; padding: 24px; flex: 1; min-width: 320px; display: none; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
         .app-wrapper.has-chart .chart-panel { display: flex; }
         
-        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
+        .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
         .chart-title { font-size: 15px; font-weight: bold; color: #38bdf8; }
         .close-chart-btn { background: #1e293b; border: 1px solid #334155; color: #f8fafc; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; }
         .close-chart-btn:hover { background: #f87171; color: #fff; }
         
-        .canvas-container { width: 100%; height: 300px; position: relative; margin-top: 10px; }
-        canvas { width: 100%!important; height: 100%!important; }
+        .canvas-container { width: 100%; height: 300px; position: relative; margin-top: 10px; touch-action: none; }
+        canvas { width: 100%!important; height: 100%!important; cursor: crosshair; }
 
-        /* Gaya Khusus Portfolio & Info */
+        /* Gaya Portfolio & Info */
         .portfolio-summary { background: linear-gradient(135deg, #0284c7, #0f172a); border-radius: 14px; padding: 18px; margin-bottom: 16px; border: 1px solid #38bdf8; }
         .summary-label { font-size: 11px; text-transform: uppercase; color: #cbd5e1; font-weight: bold; }
         .summary-value { font-size: 24px; font-weight: bold; color: #fff; font-family: monospace; margin: 4px 0; }
@@ -187,7 +187,7 @@
             </div>
 
             <div class="info-card">
-                <div class="info-title">💡 Fungsi Nisbah Nisbah Pertukaran</div>
+                <div class="info-title">💡 Fungsi Nisbah Pertukaran</div>
                 <div class="info-desc">
                     Aplikasi ini tidak hanya mengira nilai Fiat, tetapi mengukur kekuatan kuasa membeli koin crypto anda terhadap koin altcoin lain untuk membantu anda membuat keputusan pertukaran (*swap*) yang menguntungkan.
                 </div>
@@ -209,20 +209,20 @@
         </div>
     </div>
 
-    <!-- Panel Graf Garisan Line Chart -->
+    <!-- PANEL GRAF INTERAKTIF -->
     <div class="chart-panel" id="chartPanel">
         <div class="chart-header">
             <span class="chart-title" id="chartTitle">Graf Pergerakan Nisbah</span>
             <button class="close-chart-btn" onclick="closeChart()">✕</button>
         </div>
-        <div style="font-size: 11px; color: #94a3b8;" id="chartSubTitle">Memuatkan data graf...</div>
+        <div style="font-size: 11px; color: #94a3b8; min-height: 18px;" id="chartSubTitle">Memuatkan data graf...</div>
         
         <div class="canvas-container">
             <canvas id="ratioChart"></canvas>
         </div>
 
         <div style="background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #1e293b; font-size: 11px; color: #94a3b8; margin-top: 15px; line-height: 1.5;">
-            <strong>Nota Skala Graf:</strong> Graf garisan di atas menunjukkan titik perubahan nisbah. Bagi pilihan <b>1 Hari</b>, titik menunjukkan pergerakan jam demi jam. Untuk <b>3, 7, atau 30 Hari</b>, titik mewakili trend harian.
+            <strong>Panduan Interaktif:</strong> Sentuh atau gerakkan jari/tetikus di atas graf untuk melihat pergerakan jam demi jam (1D) atau harian (3D, 7D, 30D). Dot <span style="color:#22c55e; font-weight:bold;">MAX</span> &amp; <span style="color:#ef4444; font-weight:bold;">MIN</span> menunjukkan paras tertinggi/terendah.
         </div>
     </div>
 </div>
@@ -247,6 +247,9 @@ let usdToMyr = 4.45;
 let currentTimeframe = '24h';
 let activeSelectedSymbol = null;
 let userPortfolio = JSON.parse(localStorage.getItem('userPortfolio')) || [];
+
+let currentChartPoints = [];
+let chartInteractionBound = false;
 
 function switchPage(pageId, btnElement) {
     document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
@@ -394,77 +397,7 @@ function selectCard(baseSymbol, targetSymbol, cardElement) {
     fetchAndDrawChart(baseSymbol, targetSymbol);
 }
 
-// FUNGSI PORTFOLIO SAYA
-function addPortfolioItem() {
-    const symbol = document.getElementById('portCoinSelect').value;
-    const amount = parseFloat(document.getElementById('portCoinAmount').value);
-
-    if (!amount || amount <= 0) return alert('Sila masukkan kuantiti yang sah.');
-
-    const existingIndex = userPortfolio.findIndex(item => item.symbol === symbol);
-    if (existingIndex > -1) {
-        userPortfolio[existingIndex].amount += amount;
-    } else {
-        userPortfolio.push({ symbol, amount });
-    }
-
-    localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
-    document.getElementById('portCoinAmount').value = '';
-    renderPortfolio();
-}
-
-function deletePortfolioItem(symbol) {
-    userPortfolio = userPortfolio.filter(item => item.symbol !== symbol);
-    localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
-    renderPortfolio();
-}
-
-function renderPortfolio() {
-    const listEl = document.getElementById('portfolioList');
-    let grandTotalUSD = 0;
-
-    if (userPortfolio.length === 0) {
-        listEl.innerHTML = '<div class="status-msg">Tiada simpanan direkodkan lagi.</div>';
-        document.getElementById('totalPortUSD').innerText = '$0.00 USD';
-        document.getElementById('totalPortMYR').innerText = '≈ RM 0.00 MYR';
-        return;
-    }
-
-    listEl.innerHTML = '';
-    userPortfolio.forEach(item => {
-        const coinPrice = marketData[item.symbol]?.priceUSD || 0;
-        const totalValueUSD = item.amount * coinPrice;
-        grandTotalUSD += totalValueUSD;
-
-        listEl.innerHTML += `
-            <div class="port-item">
-                <div>
-                    <div style="font-weight:bold; font-size:14px; color:#fff;">${item.symbol}</div>
-                    <div style="font-size:11px; color:#64748b;">${item.amount.toLocaleString()} ${item.symbol}</div>
-                </div>
-                <div style="text-align:right;">
-                    <div style="font-weight:bold; font-size:14px; color:#38bdf8;">$${totalValueUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
-                    <button class="btn-delete" style="margin-top:4px;" onclick="deletePortfolioItem('${item.symbol}')">Padam</button>
-                </div>
-            </div>
-        `;
-    });
-
-    const grandTotalMYR = grandTotalUSD * usdToMyr;
-    document.getElementById('totalPortUSD').innerText = `$${grandTotalUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
-    document.getElementById('totalPortMYR').innerText = `≈ RM ${grandTotalMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} MYR`;
-}
-
-function updateInfoTab() {
-    if (marketData['BTC']) {
-        document.getElementById('infoBtcPrice').innerText = `$${marketData['BTC'].priceUSD.toLocaleString()}`;
-    }
-    if (marketData['ETH']) {
-        document.getElementById('infoEthPrice').innerText = `$${marketData['ETH'].priceUSD.toLocaleString()}`;
-    }
-}
-
-// LOGIK GRAF GARISAN & CACHE
+// LOGIK GRAF SEJARAH & CACHE
 async function fetchAndDrawChart(baseSymbol, targetSymbol) {
     document.getElementById('chartTitle').innerText = `Graf Pergerakan Nisbah: ${baseSymbol} / ${targetSymbol}`;
     const subTitle = document.getElementById('chartSubTitle');
@@ -541,6 +474,7 @@ function generateFallbackChart(baseSymbol, targetSymbol, days) {
     drawCanvasLineChart(simulatedData);
 }
 
+// PELUKIS CANVAS GRAF INTERAKTIF
 function drawCanvasLineChart(dataPoints) {
     const canvas = document.getElementById('ratioChart');
     const ctx = canvas.getContext('2d');
@@ -553,50 +487,185 @@ function drawCanvasLineChart(dataPoints) {
     const height = canvas.parentElement.clientHeight;
 
     ctx.clearRect(0, 0, width, height);
-
     if (dataPoints.length === 0) return;
 
     let min = Math.min(...dataPoints);
     let max = Math.max(...dataPoints);
     let range = (max - min) || 1;
 
+    let minIndex = dataPoints.indexOf(min);
+    let maxIndex = dataPoints.indexOf(max);
+
     let isPositiveTrend = dataPoints[dataPoints.length - 1] >= dataPoints[0];
     let lineColor = isPositiveTrend ? '#38bdf8' : '#f87171';
 
-    ctx.strokeStyle = '#1e293b';
-    ctx.lineWidth = 1;
-    for (let i = 1; i <= 4; i++) {
-        let y = (height / 5) * i;
+    // 1. PAKSI Y (PARAS HARGA / NISBAH)
+    ctx.fillStyle = '#64748b';
+    ctx.font = '10px monospace';
+    ctx.textAlign = 'left';
+    for (let i = 0; i <= 4; i++) {
+        let yVal = max - (range * (i / 4));
+        let yPos = (height - 40) * (i / 4) + 20;
+        
+        ctx.strokeStyle = '#1e293b';
         ctx.beginPath();
-        ctx.moveTo(0, y);
-        ctx.lineTo(width, y);
+        ctx.moveTo(0, yPos);
+        ctx.lineTo(width, yPos);
         ctx.stroke();
+
+        ctx.fillText(yVal.toFixed(4), 8, yPos - 4);
     }
 
-    ctx.beginPath();
-    ctx.strokeStyle = lineColor;
-    ctx.lineWidth = 3;
-
+    // 2. KOORDINAT TITIK DATA
     let stepX = width / (dataPoints.length - 1);
-
-    dataPoints.forEach((val, index) => {
+    currentChartPoints = dataPoints.map((val, index) => {
         let x = index * stepX;
-        let y = height - ((val - min) / range * (height - 40) + 20);
-
-        if (index === 0) ctx.moveTo(x, y);
-        else ctx.lineTo(x, y);
+        let y = height - ((val - min) / range * (height - 50) + 25);
+        return { x, y, val, index };
     });
 
+    // 3. GARISAN GRAF
+    ctx.beginPath();
+    ctx.strokeStyle = lineColor;
+    ctx.lineWidth = 2.5;
+    currentChartPoints.forEach((pt, i) => {
+        if (i === 0) ctx.moveTo(pt.x, pt.y);
+        else ctx.lineTo(pt.x, pt.y);
+    });
     ctx.stroke();
 
+    // Gradien Latar Belakang
     let grad = ctx.createLinearGradient(0, 0, 0, height);
-    grad.addColorStop(0, isPositiveTrend ? 'rgba(56, 189, 248, 0.35)' : 'rgba(248, 113, 113, 0.35)');
+    grad.addColorStop(0, isPositiveTrend ? 'rgba(56, 189, 248, 0.25)' : 'rgba(248, 113, 113, 0.25)');
     grad.addColorStop(1, 'rgba(15, 23, 42, 0)');
-
     ctx.lineTo(width, height);
     ctx.lineTo(0, height);
     ctx.fillStyle = grad;
     ctx.fill();
+
+    // 4. PENANDA TITIK MAX & MIN
+    drawHighlightPoint(ctx, currentChartPoints[maxIndex], '#22c55e', 'MAX: ' + max.toFixed(4));
+    drawHighlightPoint(ctx, currentChartPoints[minIndex], '#ef4444', 'MIN: ' + min.toFixed(4));
+
+    if (!chartInteractionBound) {
+        bindChartEvents(canvas);
+        chartInteractionBound = true;
+    }
+}
+
+function drawHighlightPoint(ctx, pt, color, label) {
+    if (!pt) return;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.fillStyle = '#ffffff';
+    ctx.font = 'bold 9px monospace';
+    ctx.textAlign = pt.x > 150 ? 'right' : 'left';
+    ctx.fillText(label, pt.x > 150 ? pt.x - 8 : pt.x + 8, pt.y - 6);
+}
+
+function bindChartEvents(canvas) {
+    const handleMove = (e) => {
+        const rect = canvas.getBoundingClientRect();
+        const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+        const touchX = clientX - rect.left;
+
+        if (currentChartPoints.length === 0) return;
+
+        let closest = currentChartPoints.reduce((prev, curr) => 
+            Math.abs(curr.x - touchX) < Math.abs(prev.x - touchX) ? curr : prev
+        );
+
+        const totalPoints = currentChartPoints.length - 1;
+        let timeLabel = "";
+        
+        if (currentTimeframe === '24h') {
+            let hourAgo = totalPoints - closest.index;
+            timeLabel = hourAgo === 0 ? "Sekarang" : `${hourAgo} jam lepas`;
+        } else {
+            let daysAgo = Math.round((totalPoints - closest.index) * (parseInt(currentTimeframe) / totalPoints));
+            timeLabel = daysAgo === 0 ? "Hari ini" : `${daysAgo} hari lepas`;
+        }
+
+        document.getElementById('chartSubTitle').innerHTML = 
+            `<span style="color:#38bdf8; font-weight:bold;">Nisbah: ${closest.val.toFixed(6)}</span> | Masa: ${timeLabel}`;
+    };
+
+    canvas.addEventListener('mousemove', handleMove);
+    canvas.addEventListener('touchmove', handleMove);
+    canvas.addEventListener('touchstart', handleMove);
+}
+
+// FUNGSI PORTFOLIO
+function addPortfolioItem() {
+    const symbol = document.getElementById('portCoinSelect').value;
+    const amount = parseFloat(document.getElementById('portCoinAmount').value);
+
+    if (!amount || amount <= 0) return alert('Sila masukkan kuantiti yang sah.');
+
+    const existingIndex = userPortfolio.findIndex(item => item.symbol === symbol);
+    if (existingIndex > -1) {
+        userPortfolio[existingIndex].amount += amount;
+    } else {
+        userPortfolio.push({ symbol, amount });
+    }
+
+    localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
+    document.getElementById('portCoinAmount').value = '';
+    renderPortfolio();
+}
+
+function deletePortfolioItem(symbol) {
+    userPortfolio = userPortfolio.filter(item => item.symbol !== symbol);
+    localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
+    renderPortfolio();
+}
+
+function renderPortfolio() {
+    const listEl = document.getElementById('portfolioList');
+    let grandTotalUSD = 0;
+
+    if (userPortfolio.length === 0) {
+        listEl.innerHTML = '<div class="status-msg">Tiada simpanan direkodkan lagi.</div>';
+        document.getElementById('totalPortUSD').innerText = '$0.00 USD';
+        document.getElementById('totalPortMYR').innerText = '≈ RM 0.00 MYR';
+        return;
+    }
+
+    listEl.innerHTML = '';
+    userPortfolio.forEach(item => {
+        const coinPrice = marketData[item.symbol]?.priceUSD || 0;
+        const totalValueUSD = item.amount * coinPrice;
+        grandTotalUSD += totalValueUSD;
+
+        listEl.innerHTML += `
+            <div class="port-item">
+                <div>
+                    <div style="font-weight:bold; font-size:14px; color:#fff;">${item.symbol}</div>
+                    <div style="font-size:11px; color:#64748b;">${item.amount.toLocaleString()} ${item.symbol}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-weight:bold; font-size:14px; color:#38bdf8;">$${totalValueUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                    <button class="btn-delete" style="margin-top:4px;" onclick="deletePortfolioItem('${item.symbol}')">Padam</button>
+                </div>
+            </div>
+        `;
+    });
+
+    const grandTotalMYR = grandTotalUSD * usdToMyr;
+    document.getElementById('totalPortUSD').innerText = `$${grandTotalUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
+    document.getElementById('totalPortMYR').innerText = `≈ RM ${grandTotalMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} MYR`;
+}
+
+function updateInfoTab() {
+    if (marketData['BTC']) {
+        document.getElementById('infoBtcPrice').innerText = `$${marketData['BTC'].priceUSD.toLocaleString()}`;
+    }
+    if (marketData['ETH']) {
+        document.getElementById('infoEthPrice').innerText = `$${marketData['ETH'].priceUSD.toLocaleString()}`;
+    }
 }
 
 function closeChart() {
