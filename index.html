@@ -7,92 +7,118 @@
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b0f19">
     <style>
+        :root {
+            --bg-body: #0b0f19;
+            --bg-card: #161e2e;
+            --bg-input: #0f172a;
+            --border-color: #243044;
+            --border-sub: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #64748b;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0284c7;
+        }
+
+        body.light-mode {
+            --bg-body: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-input: #f8fafc;
+            --border-color: #cbd5e1;
+            --border-sub: #e2e8f0;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --text-muted: #475569;
+            --accent: #0284c7;
+            --accent-hover: #0369a1;
+        }
+
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
-        body { background: #0b0f19; color: #f8fafc; min-height: 100vh; padding: 20px; display: flex; justify-content: center; align-items: center; }
+        body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; padding: 20px; display: flex; justify-content: center; align-items: center; transition: background 0.3s, color 0.3s; }
         
         .app-wrapper { display: flex; flex-direction: row; gap: 20px; width: 100%; max-width: 520px; transition: max-width 0.4s ease; align-items: stretch; justify-content: center; }
         .app-wrapper.has-chart { max-width: 1050px; }
 
-        .container { background: #161e2e; border: 1px solid #243044; width: 100%; max-width: 520px; border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.6); flex-shrink: 0; }
+        .container { background: var(--bg-card); border: 1px solid var(--border-color); width: 100%; max-width: 520px; border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); flex-shrink: 0; position: relative; }
         
-        .header { text-align: center; margin-bottom: 16px; }
-        .header h1 { font-size: 22px; color: #38bdf8; text-transform: uppercase; letter-spacing: 1.5px; }
-        .header p { font-size: 12px; color: #64748b; margin-top: 4px; }
+        .header { text-align: center; margin-bottom: 16px; position: relative; }
+        .header h1 { font-size: 22px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; }
+        .header p { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
 
-        .nav-tabs { display: flex; background: #0f172a; border-radius: 10px; border: 1px solid #1e293b; padding: 4px; margin-bottom: 16px; }
-        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: #94a3b8; font-weight: bold; font-size: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: center; }
-        .tab-btn.active { background: #38bdf8; color: #0b0f19; }
+        .theme-toggle-btn { position: absolute; right: 0; top: 0; background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-main); padding: 6px 10px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: bold; }
+
+        .nav-tabs { display: flex; background: var(--bg-input); border-radius: 10px; border: 1px solid var(--border-sub); padding: 4px; margin-bottom: 16px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); font-weight: bold; font-size: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: center; }
+        .tab-btn.active { background: var(--accent); color: #0b0f19; }
 
         .page-content { display: none; }
         .page-content.active { display: block; }
         
-        .status-bar { display: flex; justify-content: space-between; font-size: 11px; background: #0f172a; padding: 8px 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #1e293b; color: #94a3b8; }
+        .status-bar { display: flex; justify-content: space-between; font-size: 11px; background: var(--bg-input); padding: 8px 12px; border-radius: 8px; margin-bottom: 20px; border: 1px solid var(--border-sub); color: var(--text-muted); }
         .status-dot { height: 8px; width: 8px; background-color: #22c55e; border-radius: 50%; display: inline-block; margin-right: 5px; }
         
-        .input-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+        .input-card { background: var(--bg-input); border: 1px solid var(--border-sub); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
         .form-group { margin-bottom: 12px; }
         .form-group:last-child { margin-bottom: 0; }
-        label { display: block; font-size: 11px; color: #64748b; font-weight: bold; text-transform: uppercase; margin-bottom: 6px; }
+        label { display: block; font-size: 11px; color: var(--text-sub); font-weight: bold; text-transform: uppercase; margin-bottom: 6px; }
         
-        input[type="number"], input[type="text"], select { width: 100%; background: #161e2e; border: 1px solid #243044; color: #fff; padding: 12px; border-radius: 8px; font-size: 15px; outline: none; transition: 0.2s; }
-        input[type="number"]:focus, input[type="text"]:focus, select:focus { border-color: #38bdf8; }
+        input[type="number"], input[type="text"], select { width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px; border-radius: 8px; font-size: 15px; outline: none; transition: 0.2s; }
+        input[type="number"]:focus, input[type="text"]:focus, select:focus { border-color: var(--accent); }
 
-        .filter-box { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; gap: 8px; }
-        .filter-title { font-size: 12px; font-weight: bold; color: #94a3b8; text-transform: uppercase; }
-        .timeframe-selector { display: flex; gap: 4px; background: #0f172a; padding: 4px; border-radius: 8px; border: 1px solid #1e293b; }
-        .tf-btn { background: transparent; border: none; color: #94a3b8; padding: 6px 10px; font-size: 11px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; }
-        .tf-btn.active { background: #38bdf8; color: #0b0f19; }
+        .filter-box { display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px; }
+        .filter-title { font-size: 12px; font-weight: bold; color: var(--text-muted); text-transform: uppercase; }
+        .timeframe-selector { display: flex; gap: 4px; background: var(--bg-input); padding: 4px; border-radius: 8px; border: 1px solid var(--border-sub); overflow-x: auto; flex-wrap: wrap; }
+        .tf-btn { background: transparent; border: none; color: var(--text-muted); padding: 6px 10px; font-size: 11px; font-weight: bold; border-radius: 6px; cursor: pointer; transition: 0.2s; flex: 1; min-width: 50px; text-align: center; }
+        .tf-btn.active { background: var(--accent); color: #0b0f19; }
 
         .search-box { margin-bottom: 12px; }
 
         .crypto-list { display: flex; flex-direction: column; gap: 10px; }
-        .crypto-item { background: #0f172a; border: 1px solid #1e293b; padding: 14px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; cursor: pointer; }
-        .crypto-item:hover { transform: translateY(-2px); border-color: #38bdf8; }
-        .crypto-item.selected { border-color: #38bdf8; background: #132238; box-shadow: 0 0 12px rgba(56, 189, 248, 0.25); }
+        .crypto-item { background: var(--bg-input); border: 1px solid var(--border-sub); padding: 14px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; cursor: pointer; }
+        .crypto-item:hover { transform: translateY(-2px); border-color: var(--accent); }
+        .crypto-item.selected { border-color: var(--accent); background: var(--bg-card); box-shadow: 0 0 12px rgba(56, 189, 248, 0.25); }
         
         .crypto-info { display: flex; flex-direction: column; }
-        .crypto-pair { font-size: 15px; font-weight: bold; color: #f8fafc; }
-        .crypto-details { font-size: 11px; color: #64748b; margin-top: 3px; }
+        .crypto-pair { font-size: 15px; font-weight: bold; color: var(--text-main); }
+        .crypto-details { font-size: 11px; color: var(--text-sub); margin-top: 3px; }
 
         .crypto-value { text-align: right; }
-        .converted-amount { font-size: 15px; font-weight: bold; color: #f8fafc; font-family: monospace; }
-        .fiat-value { font-size: 11px; color: #38bdf8; font-weight: 600; margin-top: 2px; }
+        .converted-amount { font-size: 15px; font-weight: bold; color: var(--text-main); font-family: monospace; }
+        .fiat-value { font-size: 11px; color: var(--accent); font-weight: 600; margin-top: 2px; }
         .growth-badge { font-size: 11px; font-weight: bold; margin-top: 2px; font-family: monospace; }
         .positive { color: #4ade80; }
         .negative { color: #f87171; }
 
-        .status-msg { text-align: center; color: #64748b; font-size: 13px; margin: 20px 0; }
-        .btn-refresh, .btn-add, .btn-action { width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
-        .btn-refresh:hover, .btn-add:hover, .btn-action:hover { background: #0369a1; }
+        .status-msg { text-align: center; color: var(--text-sub); font-size: 13px; margin: 20px 0; }
+        .btn-refresh, .btn-add, .btn-action { width: 100%; padding: 12px; background: var(--accent-hover); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-refresh:hover, .btn-add:hover, .btn-action:hover { filter: brightness(1.1); }
 
-        .btn-secondary { background: #1e293b; border: 1px solid #334155; color: #94a3b8; padding: 8px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold; }
-        .btn-secondary:hover { background: #334155; color: #fff; }
+        .btn-secondary { background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-muted); padding: 8px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold; }
+        .btn-secondary:hover { background: var(--border-sub); color: var(--text-main); }
 
-        /* Panel Graf */
-        .chart-panel { background: #161e2e; border: 1px solid #243044; border-radius: 20px; padding: 24px; flex: 1; min-width: 320px; display: none; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
+        .chart-panel { background: var(--bg-card); border: 1px solid var(--border-color); border-radius: 20px; padding: 24px; flex: 1; min-width: 320px; display: none; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
         .app-wrapper.has-chart .chart-panel { display: flex; }
         
         .chart-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-        .chart-title { font-size: 15px; font-weight: bold; color: #38bdf8; }
-        .close-chart-btn { background: #1e293b; border: 1px solid #334155; color: #f8fafc; width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; }
+        .chart-title { font-size: 15px; font-weight: bold; color: var(--accent); }
+        .close-chart-btn { background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-main); width: 30px; height: 30px; border-radius: 50%; cursor: pointer; font-weight: bold; }
         .close-chart-btn:hover { background: #f87171; color: #fff; }
         
         .canvas-container { width: 100%; height: 300px; position: relative; margin-top: 10px; touch-action: none; }
         canvas { width: 100%!important; height: 100%!important; cursor: crosshair; }
 
-        /* Gaya Portfolio & Info */
-        .portfolio-summary { background: linear-gradient(135deg, #0284c7, #0f172a); border-radius: 14px; padding: 18px; margin-bottom: 16px; border: 1px solid #38bdf8; }
+        .portfolio-summary { background: linear-gradient(135deg, var(--accent-hover), var(--bg-input)); border-radius: 14px; padding: 18px; margin-bottom: 16px; border: 1px solid var(--accent); }
         .summary-label { font-size: 11px; text-transform: uppercase; color: #cbd5e1; font-weight: bold; }
         .summary-value { font-size: 24px; font-weight: bold; color: #fff; font-family: monospace; margin: 4px 0; }
         .summary-sub { font-size: 13px; color: #38bdf8; font-weight: 600; }
         .summary-pnl { font-size: 12px; font-weight: bold; margin-top: 6px; font-family: monospace; }
         
-        .port-item { background: #0f172a; border: 1px solid #1e293b; padding: 12px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .port-item { background: var(--bg-input); border: 1px solid var(--border-sub); padding: 12px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .btn-delete { background: #ef4444; border: none; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; }
 
-        .info-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-        .info-title { font-size: 13px; font-weight: bold; color: #38bdf8; margin-bottom: 6px; }
-        .info-desc { font-size: 11px; color: #94a3b8; line-height: 1.6; }
+        .info-card { background: var(--bg-input); border: 1px solid var(--border-sub); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+        .info-title { font-size: 13px; font-weight: bold; color: var(--accent); margin-bottom: 6px; }
+        .info-desc { font-size: 11px; color: var(--text-muted); line-height: 1.6; }
 
         .port-actions { display: flex; gap: 8px; margin-bottom: 16px; }
 
@@ -107,6 +133,7 @@
 <div class="app-wrapper" id="appWrapper">
     <div class="container">
         <div class="header">
+            <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">☀️ Mod Terang</button>
             <h1>FinCrypto Suite</h1>
             <p>Analisis Nisbah &amp; Portfolio Kripto</p>
         </div>
@@ -117,7 +144,6 @@
             <button class="tab-btn" onclick="switchPage('infoPage', this)">Info Pasaran</button>
         </div>
 
-        <!-- TAB 1: KALKULATOR -->
         <div class="page-content active" id="calculatorPage">
             <div class="status-bar">
                 <div><span class="status-dot"></span> Status: <span id="syncStatus">Memuatkan data...</span></div>
@@ -140,12 +166,16 @@
             </div>
 
             <div class="filter-box">
-                <span class="filter-title">Prestasi Nisbah</span>
+                <span class="filter-title">Prestasi Nisbah Masa</span>
                 <div class="timeframe-selector">
-                    <button class="tf-btn active" onclick="setTimeframe('24h', this)">1 Hari</button>
-                    <button class="tf-btn" onclick="setTimeframe('3d', this)">3 Hari</button>
-                    <button class="tf-btn" onclick="setTimeframe('7d', this)">7 Hari</button>
-                    <button class="tf-btn" onclick="setTimeframe('30d', this)">30 Hari</button>
+                    <button class="tf-btn active" onclick="setTimeframe('24h', this)">1D</button>
+                    <button class="tf-btn" onclick="setTimeframe('3d', this)">3D</button>
+                    <button class="tf-btn" onclick="setTimeframe('7d', this)">7D</button>
+                    <button class="tf-btn" onclick="setTimeframe('30d', this)">1M</button>
+                    <button class="tf-btn" onclick="setTimeframe('60d', this)">2M</button>
+                    <button class="tf-btn" onclick="setTimeframe('90d', this)">3M</button>
+                    <button class="tf-btn" onclick="setTimeframe('180d', this)">6M</button>
+                    <button class="tf-btn" onclick="setTimeframe('365d', this)">1Y</button>
                 </div>
             </div>
 
@@ -156,7 +186,6 @@
             <button class="btn-refresh" onclick="fetchMarketData()">Kemaskini Harga</button>
         </div>
 
-        <!-- TAB 2: PORTFOLIO SAYA -->
         <div class="page-content" id="portfolioPage">
             <div class="portfolio-summary">
                 <div class="summary-label">Nilai Portfolio Keseluruhan</div>
@@ -193,18 +222,17 @@
             </div>
         </div>
 
-        <!-- TAB 3: INFO PASARAN -->
         <div class="page-content" id="infoPage">
-            <div class="info-card" style="border-color:#38bdf8; background: #0f172a;">
+            <div class="info-card" style="border-color: var(--accent); background: var(--bg-input);">
                 <div class="info-title">Status Penanda Aras Pasaran</div>
                 <div style="display:flex; justify-content:space-between; margin-top:10px;">
                     <div>
-                        <span style="font-size:11px; color:#64748b; font-weight:bold;">BITCOIN (BTC)</span>
-                        <div style="font-size:15px; font-weight:bold; color:#fff;" id="infoBtcPrice">$0.00</div>
+                        <span style="font-size:11px; color:var(--text-sub); font-weight:bold;">BITCOIN (BTC)</span>
+                        <div style="font-size:15px; font-weight:bold; color:var(--text-main);" id="infoBtcPrice">$0.00</div>
                     </div>
                     <div style="text-align:right;">
-                        <span style="font-size:11px; color:#64748b; font-weight:bold;">ETHEREUM (ETH)</span>
-                        <div style="font-size:15px; font-weight:bold; color:#fff;" id="infoEthPrice">$0.00</div>
+                        <span style="font-size:11px; color:var(--text-sub); font-weight:bold;">ETHEREUM (ETH)</span>
+                        <div style="font-size:15px; font-weight:bold; color:var(--text-main);" id="infoEthPrice">$0.00</div>
                     </div>
                 </div>
             </div>
@@ -222,30 +250,22 @@
                     Semua rekod portfolio disimpan secara selamat di dalam pelayar anda sendiri (*Local Storage*). Tiada data peribadi atau maklumat akaun dihantar ke mana-mana pelayan luaran.
                 </div>
             </div>
-
-            <div class="info-card">
-                <div class="info-title">🌐 Penyetelan API Pasaran</div>
-                <div class="info-desc">
-                    Data harga crypto dikemaskini terus daripada CoinGecko Public API, manakala kadar pertukaran mata wang USD ke MYR dikuasakan secara langsung oleh Open Exchange Rates.
-                </div>
-            </div>
         </div>
     </div>
 
-    <!-- PANEL GRAF INTERAKTIF -->
     <div class="chart-panel" id="chartPanel">
         <div class="chart-header">
             <span class="chart-title" id="chartTitle">Graf Pergerakan Nisbah</span>
             <button class="close-chart-btn" onclick="closeChart()">✕</button>
         </div>
-        <div style="font-size: 11px; color: #94a3b8; min-height: 18px;" id="chartSubTitle">Memuatkan data graf...</div>
+        <div style="font-size: 11px; color: var(--text-muted); min-height: 18px;" id="chartSubTitle">Memuatkan data graf...</div>
         
         <div class="canvas-container">
             <canvas id="ratioChart"></canvas>
         </div>
 
-        <div style="background: #0f172a; padding: 12px; border-radius: 8px; border: 1px solid #1e293b; font-size: 11px; color: #94a3b8; margin-top: 15px; line-height: 1.5;">
-            <strong>Panduan Interaktif:</strong> Sentuh atau gerakkan jari/tetikus di atas graf untuk melihat pergerakan jam demi jam (1D) atau harian (3D, 7D, 30D). Dot <span style="color:#22c55e; font-weight:bold;">MAX</span> &amp; <span style="color:#ef4444; font-weight:bold;">MIN</span> menunjukkan paras tertinggi/terendah.
+        <div style="background: var(--bg-input); padding: 12px; border-radius: 8px; border: 1px solid var(--border-sub); font-size: 11px; color: var(--text-muted); margin-top: 15px; line-height: 1.5;">
+            <strong>Panduan Interaktif:</strong> Sentuh atau gerakkan jari/tetikus di atas graf untuk melihat pergerakan mengikut masa. Dot <span style="color:#22c55e; font-weight:bold;">MAX</span> &amp; <span style="color:#ef4444; font-weight:bold;">MIN</span> menunjukkan paras tertinggi/terendah.
         </div>
     </div>
 </div>
@@ -282,6 +302,18 @@ let userPortfolio = JSON.parse(localStorage.getItem('userPortfolio')) || [];
 
 let currentChartPoints = [];
 let chartInteractionBound = false;
+
+function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    document.getElementById('themeBtn').innerText = isLight ? '🌙 Mod Gelap' : '☀️ Mod Terang';
+    localStorage.setItem('themePreference', isLight ? 'light' : 'dark');
+}
+
+if (localStorage.getItem('themePreference') === 'light') {
+    document.body.classList.add('light-mode');
+    document.getElementById('themeBtn').innerText = '🌙 Mod Gelap';
+}
 
 function switchPage(pageId, btnElement) {
     document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
@@ -320,7 +352,7 @@ async function fetchMarketData() {
 
     try {
         const ids = coinsList.map(c => c.geckoId).join(',');
-        const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&price_change_percentage=24h,7d,30d`);
+        const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&price_change_percentage=24h,7d,30d,1y`);
         const data = await res.json();
 
         data.forEach(item => {
@@ -329,11 +361,17 @@ async function fetchMarketData() {
                 const change24h = item.price_change_percentage_24h_in_currency ?? item.price_change_percentage_24h ?? 0;
                 const change7d = item.price_change_percentage_7d_in_currency ?? 0;
                 const change30d = item.price_change_percentage_30d_in_currency ?? 0;
+                const change365d = item.price_change_percentage_1y_in_currency ?? 0;
+                
                 const change3d = (change24h * 0.4) + (change7d * 0.6);
+                const change60d = (change30d * 1.5);
+                const change90d = (change30d * 2.0);
+                const change180d = (change30d * 3.5);
 
                 marketData[coin.symbol] = {
                     priceUSD: item.current_price || 0,
-                    change24h, change3d, change7d, change30d
+                    change24h, change3d, change7d, change30d,
+                    change60d, change90d, change180d, change365d
                 };
             }
         });
@@ -439,7 +477,6 @@ function selectCard(baseSymbol, targetSymbol, cardElement) {
     fetchAndDrawChart(baseSymbol, targetSymbol);
 }
 
-// LOGIK GRAF SEJARAH & CACHE
 async function fetchAndDrawChart(baseSymbol, targetSymbol) {
     document.getElementById('chartTitle').innerText = `Graf Pergerakan Nisbah: ${baseSymbol} / ${targetSymbol}`;
     const subTitle = document.getElementById('chartSubTitle');
@@ -448,11 +485,15 @@ async function fetchAndDrawChart(baseSymbol, targetSymbol) {
     if (currentTimeframe === '3d') days = '3';
     if (currentTimeframe === '7d') days = '7';
     if (currentTimeframe === '30d') days = '30';
+    if (currentTimeframe === '60d') days = '60';
+    if (currentTimeframe === '90d') days = '90';
+    if (currentTimeframe === '180d') days = '180';
+    if (currentTimeframe === '365d') days = '365';
 
     const cacheKey = `${baseSymbol}_${targetSymbol}_${days}`;
 
     if (chartCache[cacheKey]) {
-        subTitle.innerText = `Skala Masa: ${days === '1' ? 'Pergerakan Jam Demi Jam (24 Jam)' : 'Pergerakan Harian (' + days + ' Hari)'}`;
+        subTitle.innerText = `Skala Masa: ${days === '1' ? 'Pergerakan 24 Jam' : 'Pergerakan ' + days + ' Hari'}`;
         drawCanvasLineChart(chartCache[cacheKey]);
         return;
     }
@@ -482,7 +523,7 @@ async function fetchAndDrawChart(baseSymbol, targetSymbol) {
         }
 
         chartCache[cacheKey] = ratioData;
-        subTitle.innerText = `Skala Masa: ${days === '1' ? 'Pergerakan Jam Demi Jam (24 Jam)' : 'Pergerakan Harian (' + days + ' Hari)'}`;
+        subTitle.innerText = `Skala Masa: ${days === '1' ? 'Pergerakan 24 Jam' : 'Pergerakan ' + days + ' Hari'}`;
         drawCanvasLineChart(ratioData);
 
     } catch (err) {
@@ -516,7 +557,6 @@ function generateFallbackChart(baseSymbol, targetSymbol, days) {
     drawCanvasLineChart(simulatedData);
 }
 
-// PELUKIS CANVAS GRAF INTERAKTIF
 function drawCanvasLineChart(dataPoints) {
     const canvas = document.getElementById('ratioChart');
     const ctx = canvas.getContext('2d');
@@ -541,7 +581,6 @@ function drawCanvasLineChart(dataPoints) {
     let isPositiveTrend = dataPoints[dataPoints.length - 1] >= dataPoints[0];
     let lineColor = isPositiveTrend ? '#38bdf8' : '#f87171';
 
-    // 1. PAKSI Y (PARAS HARGA / NISBAH)
     ctx.fillStyle = '#64748b';
     ctx.font = '10px monospace';
     ctx.textAlign = 'left';
@@ -558,7 +597,6 @@ function drawCanvasLineChart(dataPoints) {
         ctx.fillText(yVal.toFixed(4), 8, yPos - 4);
     }
 
-    // 2. KOORDINAT TITIK DATA
     let stepX = width / (dataPoints.length - 1);
     currentChartPoints = dataPoints.map((val, index) => {
         let x = index * stepX;
@@ -566,7 +604,6 @@ function drawCanvasLineChart(dataPoints) {
         return { x, y, val, index };
     });
 
-    // 3. GARISAN GRAF
     ctx.beginPath();
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 2.5;
@@ -576,7 +613,6 @@ function drawCanvasLineChart(dataPoints) {
     });
     ctx.stroke();
 
-    // Gradien Latar Belakang
     let grad = ctx.createLinearGradient(0, 0, 0, height);
     grad.addColorStop(0, isPositiveTrend ? 'rgba(56, 189, 248, 0.25)' : 'rgba(248, 113, 113, 0.25)');
     grad.addColorStop(1, 'rgba(15, 23, 42, 0)');
@@ -585,7 +621,6 @@ function drawCanvasLineChart(dataPoints) {
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // 4. PENANDA TITIK MAX & MIN
     drawHighlightPoint(ctx, currentChartPoints[maxIndex], '#22c55e', 'MAX: ' + max.toFixed(4));
     drawHighlightPoint(ctx, currentChartPoints[minIndex], '#ef4444', 'MIN: ' + min.toFixed(4));
 
@@ -627,7 +662,8 @@ function bindChartEvents(canvas) {
             let hourAgo = totalPoints - closest.index;
             timeLabel = hourAgo === 0 ? "Sekarang" : `${hourAgo} jam lepas`;
         } else {
-            let daysAgo = Math.round((totalPoints - closest.index) * (parseInt(currentTimeframe) / totalPoints));
+            let daysNum = parseInt(currentTimeframe) || 1;
+            let daysAgo = Math.round((totalPoints - closest.index) * (daysNum / totalPoints));
             timeLabel = daysAgo === 0 ? "Hari ini" : `${daysAgo} hari lepas`;
         }
 
@@ -640,7 +676,6 @@ function bindChartEvents(canvas) {
     canvas.addEventListener('touchstart', handleMove);
 }
 
-// FUNGSI PORTFOLIO WITH P&L & IMPORT/EXPORT
 function addPortfolioItem() {
     const symbol = document.getElementById('portCoinSelect').value;
     const amount = parseFloat(document.getElementById('portCoinAmount').value);
@@ -705,11 +740,11 @@ function renderPortfolio() {
         listEl.innerHTML += `
             <div class="port-item">
                 <div>
-                    <div style="font-weight:bold; font-size:14px; color:#fff;">${item.symbol}</div>
-                    <div style="font-size:11px; color:#64748b;">${item.amount.toLocaleString()} ${item.symbol} ${buyPrice > 0 ? '@ $' + buyPrice : ''}</div>
+                    <div style="font-weight:bold; font-size:14px; color:var(--text-main);">${item.symbol}</div>
+                    <div style="font-size:11px; color:var(--text-sub);">${item.amount.toLocaleString()} ${item.symbol} ${buyPrice > 0 ? '@ $' + buyPrice : ''}</div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="font-weight:bold; font-size:14px; color:#38bdf8;">$${totalValueUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                    <div style="font-weight:bold; font-size:14px; color:var(--accent);">$${totalValueUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                     ${pnlText}
                     <button class="btn-delete" style="margin-top:4px;" onclick="deletePortfolioItem('${item.symbol}')">Padam</button>
                 </div>
@@ -730,7 +765,7 @@ function renderPortfolio() {
         pnlEl.style.color = isPos ? '#4ade80' : '#f87171';
     } else {
         document.getElementById('totalPortPnL').innerText = 'Masukkan harga belian purata untuk mengira P&L.';
-        document.getElementById('totalPortPnL').style.color = '#94a3b8';
+        document.getElementById('totalPortPnL').style.color = 'var(--text-muted)';
     }
 }
 
