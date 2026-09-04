@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinCrypto Suite - Dynamic Line Chart</title>
+    <title>FinCrypto Suite</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b0f19">
     <style>
@@ -60,7 +60,8 @@
         .negative { color: #f87171; }
 
         .status-msg { text-align: center; color: #64748b; font-size: 13px; margin: 20px 0; }
-        .btn-refresh { width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .btn-refresh, .btn-add { width: 100%; padding: 12px; background: #0284c7; color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-refresh:hover, .btn-add:hover { background: #0369a1; }
 
         /* Panel Graf */
         .chart-panel { background: #161e2e; border: 1px solid #243044; border-radius: 20px; padding: 24px; flex: 1; min-width: 320px; display: none; flex-direction: column; box-shadow: 0 20px 40px rgba(0,0,0,0.6); }
@@ -74,6 +75,19 @@
         .canvas-container { width: 100%; height: 300px; position: relative; margin-top: 10px; }
         canvas { width: 100%!important; height: 100%!important; }
 
+        /* Gaya Khusus Portfolio & Info */
+        .portfolio-summary { background: linear-gradient(135deg, #0284c7, #0f172a); border-radius: 14px; padding: 18px; margin-bottom: 16px; border: 1px solid #38bdf8; }
+        .summary-label { font-size: 11px; text-transform: uppercase; color: #cbd5e1; font-weight: bold; }
+        .summary-value { font-size: 24px; font-weight: bold; color: #fff; font-family: monospace; margin: 4px 0; }
+        .summary-sub { font-size: 13px; color: #38bdf8; font-weight: 600; }
+        
+        .port-item { background: #0f172a; border: 1px solid #1e293b; padding: 12px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .btn-delete { background: #ef4444; border: none; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; }
+
+        .info-card { background: #0f172a; border: 1px solid #1e293b; border-radius: 12px; padding: 14px; margin-bottom: 12px; }
+        .info-title { font-size: 13px; font-weight: bold; color: #38bdf8; margin-bottom: 6px; }
+        .info-desc { font-size: 11px; color: #94a3b8; line-height: 1.6; }
+
         @media (max-width: 820px) {
             .app-wrapper { flex-direction: column; }
             .chart-panel { min-height: 420px; width: 100%; }
@@ -86,7 +100,7 @@
     <div class="container">
         <div class="header">
             <h1>FinCrypto Suite</h1>
-            <p>Analisis Nisbah &amp; Graf Sejarah Masa</p>
+            <p>Analisis Nisbah &amp; Portfolio Kripto</p>
         </div>
 
         <div class="nav-tabs">
@@ -95,6 +109,7 @@
             <button class="tab-btn" onclick="switchPage('infoPage', this)">Info Pasaran</button>
         </div>
 
+        <!-- TAB 1: KALKULATOR -->
         <div class="page-content active" id="calculatorPage">
             <div class="status-bar">
                 <div><span class="status-dot"></span> Status: <span id="syncStatus">Memuatkan data...</span></div>
@@ -129,17 +144,75 @@
             <button class="btn-refresh" onclick="fetchMarketData()">Kemaskini Harga</button>
         </div>
 
+        <!-- TAB 2: PORTFOLIO SAYA -->
         <div class="page-content" id="portfolioPage">
-            <div class="input-card"><h3 style="color:#38bdf8;">Portfolio</h3></div>
+            <div class="portfolio-summary">
+                <div class="summary-label">Nilai Portfolio Keseluruhan</div>
+                <div class="summary-value" id="totalPortUSD">$0.00 USD</div>
+                <div class="summary-sub" id="totalPortMYR">≈ RM 0.00 MYR</div>
+            </div>
+
+            <div class="input-card">
+                <div class="form-group">
+                    <label>Pilih Koin</label>
+                    <select id="portCoinSelect"></select>
+                </div>
+                <div class="form-group">
+                    <label>Jumlah Pegangan</label>
+                    <input type="number" id="portCoinAmount" placeholder="Contoh: 1500" min="0" step="any">
+                </div>
+                <button class="btn-add" onclick="addPortfolioItem()">Tambah Aset Simpanan</button>
+            </div>
+
+            <span class="filter-title" style="display:block; margin-bottom:10px;">Senarai Pegangan Aset</span>
+            <div id="portfolioList">
+                <div class="status-msg">Tiada simpanan direkodkan lagi.</div>
+            </div>
         </div>
+
+        <!-- TAB 3: INFO PASARAN -->
         <div class="page-content" id="infoPage">
-            <div class="input-card"><h3 style="color:#38bdf8;">Info</h3></div>
+            <div class="info-card" style="border-color:#38bdf8; background: #0f172a;">
+                <div class="info-title">Status Penanda Aras Pasaran</div>
+                <div style="display:flex; justify-content:space-between; margin-top:10px;">
+                    <div>
+                        <span style="font-size:11px; color:#64748b; font-weight:bold;">BITCOIN (BTC)</span>
+                        <div style="font-size:15px; font-weight:bold; color:#fff;" id="infoBtcPrice">$0.00</div>
+                    </div>
+                    <div style="text-align:right;">
+                        <span style="font-size:11px; color:#64748b; font-weight:bold;">ETHEREUM (ETH)</span>
+                        <div style="font-size:15px; font-weight:bold; color:#fff;" id="infoEthPrice">$0.00</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-title">💡 Fungsi Nisbah Nisbah Pertukaran</div>
+                <div class="info-desc">
+                    Aplikasi ini tidak hanya mengira nilai Fiat, tetapi mengukur kekuatan kuasa membeli koin crypto anda terhadap koin altcoin lain untuk membantu anda membuat keputusan pertukaran (*swap*) yang menguntungkan.
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-title">🔒 Keselamatan &amp; Data Tempat</div>
+                <div class="info-desc">
+                    Semua rekod portfolio disimpan secara selamat di dalam pelayar anda sendiri (*Local Storage*). Tiada data peribadi atau maklumat akaun dihantar ke mana-mana pelayan luaran.
+                </div>
+            </div>
+
+            <div class="info-card">
+                <div class="info-title">🌐 Penyetelan API Pasaran</div>
+                <div class="info-desc">
+                    Data harga crypto dikemaskini terus daripada CoinGecko Public API, manakala kadar pertukaran mata wang USD ke MYR dikuasakan secara langsung oleh Open Exchange Rates.
+                </div>
+            </div>
         </div>
     </div>
 
+    <!-- Panel Graf Garisan Line Chart -->
     <div class="chart-panel" id="chartPanel">
         <div class="chart-header">
-            <span class="chart-title" id="chartTitle">Graf Trend Nisbah Masa</span>
+            <span class="chart-title" id="chartTitle">Graf Pergerakan Nisbah</span>
             <button class="close-chart-btn" onclick="closeChart()">✕</button>
         </div>
         <div style="font-size: 11px; color: #94a3b8;" id="chartSubTitle">Memuatkan data graf...</div>
@@ -169,9 +242,11 @@ const coinsList = [
 ];
 
 let marketData = {};
+let chartCache = {};
 let usdToMyr = 4.45; 
 let currentTimeframe = '24h';
 let activeSelectedSymbol = null;
+let userPortfolio = JSON.parse(localStorage.getItem('userPortfolio')) || [];
 
 function switchPage(pageId, btnElement) {
     document.querySelectorAll('.page-content').forEach(p => p.classList.remove('active'));
@@ -181,12 +256,17 @@ function switchPage(pageId, btnElement) {
     if (pageId !== 'calculatorPage') closeChart();
 }
 
-function initDropdown() {
+function initDropdowns() {
     const baseSelect = document.getElementById('baseCoin');
+    const portSelect = document.getElementById('portCoinSelect');
+    
     baseSelect.innerHTML = '';
+    portSelect.innerHTML = '';
+
     coinsList.forEach((coin) => {
         const isDefault = coin.symbol === 'POL';
         baseSelect.add(new Option(`${coin.symbol} - ${coin.name}`, coin.symbol, isDefault, isDefault));
+        portSelect.add(new Option(`${coin.symbol} - ${coin.name}`, coin.symbol));
     });
 }
 
@@ -225,6 +305,8 @@ async function fetchMarketData() {
 
         syncEl.innerText = 'Dikemas kini';
         kiraTukaran();
+        renderPortfolio();
+        updateInfoTab();
     } catch (err) {
         syncEl.innerText = 'Ralat API';
     }
@@ -312,58 +394,157 @@ function selectCard(baseSymbol, targetSymbol, cardElement) {
     fetchAndDrawChart(baseSymbol, targetSymbol);
 }
 
-// FUNGSI AMBIL SEJARAH PASARAN & LUKIS GRAF GARISAN DYNAMIK
+// FUNGSI PORTFOLIO SAYA
+function addPortfolioItem() {
+    const symbol = document.getElementById('portCoinSelect').value;
+    const amount = parseFloat(document.getElementById('portCoinAmount').value);
+
+    if (!amount || amount <= 0) return alert('Sila masukkan kuantiti yang sah.');
+
+    const existingIndex = userPortfolio.findIndex(item => item.symbol === symbol);
+    if (existingIndex > -1) {
+        userPortfolio[existingIndex].amount += amount;
+    } else {
+        userPortfolio.push({ symbol, amount });
+    }
+
+    localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
+    document.getElementById('portCoinAmount').value = '';
+    renderPortfolio();
+}
+
+function deletePortfolioItem(symbol) {
+    userPortfolio = userPortfolio.filter(item => item.symbol !== symbol);
+    localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
+    renderPortfolio();
+}
+
+function renderPortfolio() {
+    const listEl = document.getElementById('portfolioList');
+    let grandTotalUSD = 0;
+
+    if (userPortfolio.length === 0) {
+        listEl.innerHTML = '<div class="status-msg">Tiada simpanan direkodkan lagi.</div>';
+        document.getElementById('totalPortUSD').innerText = '$0.00 USD';
+        document.getElementById('totalPortMYR').innerText = '≈ RM 0.00 MYR';
+        return;
+    }
+
+    listEl.innerHTML = '';
+    userPortfolio.forEach(item => {
+        const coinPrice = marketData[item.symbol]?.priceUSD || 0;
+        const totalValueUSD = item.amount * coinPrice;
+        grandTotalUSD += totalValueUSD;
+
+        listEl.innerHTML += `
+            <div class="port-item">
+                <div>
+                    <div style="font-weight:bold; font-size:14px; color:#fff;">${item.symbol}</div>
+                    <div style="font-size:11px; color:#64748b;">${item.amount.toLocaleString()} ${item.symbol}</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-weight:bold; font-size:14px; color:#38bdf8;">$${totalValueUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                    <button class="btn-delete" style="margin-top:4px;" onclick="deletePortfolioItem('${item.symbol}')">Padam</button>
+                </div>
+            </div>
+        `;
+    });
+
+    const grandTotalMYR = grandTotalUSD * usdToMyr;
+    document.getElementById('totalPortUSD').innerText = `$${grandTotalUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
+    document.getElementById('totalPortMYR').innerText = `≈ RM ${grandTotalMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} MYR`;
+}
+
+function updateInfoTab() {
+    if (marketData['BTC']) {
+        document.getElementById('infoBtcPrice').innerText = `$${marketData['BTC'].priceUSD.toLocaleString()}`;
+    }
+    if (marketData['ETH']) {
+        document.getElementById('infoEthPrice').innerText = `$${marketData['ETH'].priceUSD.toLocaleString()}`;
+    }
+}
+
+// LOGIK GRAF GARISAN & CACHE
 async function fetchAndDrawChart(baseSymbol, targetSymbol) {
     document.getElementById('chartTitle').innerText = `Graf Pergerakan Nisbah: ${baseSymbol} / ${targetSymbol}`;
     const subTitle = document.getElementById('chartSubTitle');
-    subTitle.innerText = `Mengambil data masa (${currentTimeframe.toUpperCase()})...`;
-
-    const baseCoinObj = coinsList.find(c => c.symbol === baseSymbol);
-    const targetCoinObj = coinsList.find(c => c.symbol === targetSymbol);
-
+    
     let days = '1';
     if (currentTimeframe === '3d') days = '3';
     if (currentTimeframe === '7d') days = '7';
     if (currentTimeframe === '30d') days = '30';
 
+    const cacheKey = `${baseSymbol}_${targetSymbol}_${days}`;
+
+    if (chartCache[cacheKey]) {
+        subTitle.innerText = `Skala Masa: ${days === '1' ? 'Pergerakan Jam Demi Jam (24 Jam)' : 'Pergerakan Harian (' + days + ' Hari)'}`;
+        drawCanvasLineChart(chartCache[cacheKey]);
+        return;
+    }
+
+    subTitle.innerText = `Mengambil data masa (${currentTimeframe.toUpperCase()})...`;
+
+    const baseCoinObj = coinsList.find(c => c.symbol === baseSymbol);
+    const targetCoinObj = coinsList.find(c => c.symbol === targetSymbol);
+
     try {
-        // Ambil data sejarah harga 
         const [resBase, resTarget] = await Promise.all([
             fetch(`https://api.coingecko.com/api/v3/coins/${baseCoinObj.geckoId}/market_chart?vs_currency=usd&days=${days}`),
             fetch(`https://api.coingecko.com/api/v3/coins/${targetCoinObj.geckoId}/market_chart?vs_currency=usd&days=${days}`)
         ]);
 
+        if (!resBase.ok || !resTarget.ok) throw new Error('Rate Limit');
+
         const dataBase = await resBase.json();
         const dataTarget = await resTarget.json();
 
-        const pricesBase = dataBase.prices;
-        const pricesTarget = dataTarget.prices;
-
-        // Padankan nisbah masa
         let ratioData = [];
-        let minLength = Math.min(pricesBase.length, pricesTarget.length);
+        let minLength = Math.min(dataBase.prices.length, dataTarget.prices.length);
 
         for (let i = 0; i < minLength; i++) {
-            let pBase = pricesBase[i][1];
-            let pTarget = pricesTarget[i][1];
-            let ratio = pBase / pTarget;
+            let ratio = dataBase.prices[i][1] / dataTarget.prices[i][1];
             ratioData.push(ratio);
         }
 
+        chartCache[cacheKey] = ratioData;
         subTitle.innerText = `Skala Masa: ${days === '1' ? 'Pergerakan Jam Demi Jam (24 Jam)' : 'Pergerakan Harian (' + days + ' Hari)'}`;
         drawCanvasLineChart(ratioData);
 
     } catch (err) {
-        subTitle.innerText = "Gagal memuatkan sejarah graf. Menggunakan trend umum.";
+        subTitle.innerText = "Memaparkan graf anggaran trend umum...";
+        generateFallbackChart(baseSymbol, targetSymbol, days);
     }
 }
 
-// PELUKIS CANVAS GRAF GARISAN
+function generateFallbackChart(baseSymbol, targetSymbol, days) {
+    const baseData = marketData[baseSymbol];
+    const targetData = marketData[targetSymbol];
+    if (!baseData || !targetData) return;
+
+    const baseChange = baseData[`change${currentTimeframe}`] || 0;
+    const targetChange = targetData[`change${currentTimeframe}`] || 0;
+    const currentRatio = baseData.priceUSD / targetData.priceUSD;
+
+    const netChangePct = (((1 + (baseChange / 100)) / (1 + (targetChange / 100))) - 1);
+    const startRatio = currentRatio / (1 + netChangePct);
+
+    let pointsCount = days === '1' ? 24 : parseInt(days);
+    let simulatedData = [];
+
+    for (let i = 0; i <= pointsCount; i++) {
+        let progress = i / pointsCount;
+        let noise = (Math.random() - 0.5) * 0.005; 
+        let interpolatedRatio = startRatio + (currentRatio - startRatio) * progress + noise;
+        simulatedData.push(interpolatedRatio);
+    }
+
+    drawCanvasLineChart(simulatedData);
+}
+
 function drawCanvasLineChart(dataPoints) {
     const canvas = document.getElementById('ratioChart');
     const ctx = canvas.getContext('2d');
     
-    // Set saiz resolusi canvas
     canvas.width = canvas.parentElement.clientWidth * 2;
     canvas.height = canvas.parentElement.clientHeight * 2;
     ctx.scale(2, 2);
@@ -382,7 +563,6 @@ function drawCanvasLineChart(dataPoints) {
     let isPositiveTrend = dataPoints[dataPoints.length - 1] >= dataPoints[0];
     let lineColor = isPositiveTrend ? '#38bdf8' : '#f87171';
 
-    // Lukis Garisan Grid Latar Belakang
     ctx.strokeStyle = '#1e293b';
     ctx.lineWidth = 1;
     for (let i = 1; i <= 4; i++) {
@@ -393,7 +573,6 @@ function drawCanvasLineChart(dataPoints) {
         ctx.stroke();
     }
 
-    // Lukis Garisan Graf
     ctx.beginPath();
     ctx.strokeStyle = lineColor;
     ctx.lineWidth = 3;
@@ -410,7 +589,6 @@ function drawCanvasLineChart(dataPoints) {
 
     ctx.stroke();
 
-    // Kesan Gradien Warna Di Bawah Garisan
     let grad = ctx.createLinearGradient(0, 0, 0, height);
     grad.addColorStop(0, isPositiveTrend ? 'rgba(56, 189, 248, 0.35)' : 'rgba(248, 113, 113, 0.35)');
     grad.addColorStop(1, 'rgba(15, 23, 42, 0)');
@@ -427,7 +605,7 @@ function closeChart() {
     document.querySelectorAll('.crypto-item').forEach(el => el.classList.remove('selected'));
 }
 
-initDropdown();
+initDropdowns();
 fetchMarketData();
 setInterval(fetchMarketData, 60000);
 
