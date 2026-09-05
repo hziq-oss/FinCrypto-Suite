@@ -6,6 +6,8 @@
     <title>FinCrypto Suite - Portfolio Saya</title>
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#0b0f19">
+    <!-- Muat turun Chart.js menerusi CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         :root {
             --bg-body: #0b0f19;
@@ -63,6 +65,10 @@
         .summary-sub { font-size: 15px; color: #38bdf8; font-weight: 600; }
         .summary-pnl { font-size: 12px; font-weight: bold; margin-top: 6px; font-family: monospace; }
         
+        /* Kad Carta Agihan */
+        .chart-card { background: var(--bg-input); border: 1px solid var(--border-sub); border-radius: 14px; padding: 16px; margin-bottom: 16px; text-align: center; }
+        .chart-container { position: relative; width: 100%; max-width: 260px; margin: 0 auto; }
+
         .port-item { background: var(--bg-input); border: 1px solid var(--border-sub); padding: 12px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .btn-add { width: 100%; padding: 12px; background: var(--accent-hover); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
         .btn-cancel { width: 100%; padding: 8px; background: transparent; color: var(--text-sub); border: 1px solid var(--border-sub); border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 6px; display: none; }
@@ -94,6 +100,14 @@
         <div class="summary-value" id="totalPortUSD">$0.00 USD</div>
         <div class="summary-sub" id="totalPortMYR">≈ RM 0.00 MYR</div>
         <div class="summary-pnl" id="totalPortPnL">P&amp;L: $0.00 USD / RM 0.00 MYR (0.00%)</div>
+    </div>
+
+    <!-- Bahagian Carta Agihan Portfolio -->
+    <div class="chart-card">
+        <span style="font-size:11px; font-weight:bold; color:var(--text-sub); text-transform:uppercase; display:block; margin-bottom:12px;">Agihan Portfolio</span>
+        <div class="chart-container">
+            <canvas id="portfolioChart"></canvas>
+        </div>
     </div>
 
     <div class="input-card">
@@ -158,12 +172,20 @@ let marketData = {};
 let usdToMyr = 4.45;
 let userPortfolio = JSON.parse(localStorage.getItem('userPortfolio')) || [];
 let editingSymbol = null;
+let chartInstance = null;
+
+const colorPalette = [
+    '#38bdf8', '#fbbf24', '#f87171', '#4ade80', '#c084fc',
+    '#f472b6', '#2dd4bf', '#fb923c', '#a3e635', '#60a5fa'
+];
 
 function toggleTheme() {
     document.body.classList.toggle('light-mode');
     const isLight = document.body.classList.contains('light-mode');
     document.getElementById('themeBtn').innerText = isLight ? '🌙 Mod Gelap' : '☀️ Mod Terang';
     localStorage.setItem('themePreference', isLight ? 'light' : 'dark');
+    if (chartInstance) renderChart([], []); // Kemas kini carta mengikut tema
+    renderPortfolio();
 }
 
 if (localStorage.getItem('themePreference') === 'light') {
@@ -269,16 +291,82 @@ function deletePortfolioItem(symbol) {
     renderPortfolio();
 }
 
+function renderChart(labels, data) {
+    const ctx = document.getElementById('portfolioChart').getContext('2d');
+    const isLight = document.body.classList.contains('light-mode');
+    const textColor = isLight ? '#0f172a' : '#f8fafc';
+
+    if (chartInstance) chartInstance.destroy();
+
+    if (data.length === 0) {
+        chartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Tiada Data'],
+                datasets: [{
+                    data: [1],
+                    backgroundColor: [isLight ? '#e2e8f0' : '#1e293b'],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                }
+            }
+        });
+        return;
+    }
+
+    chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+            labels: labels,
+            datasets: [{
+                data: data,
+                backgroundColor: colorPalette.slice(0, labels.length),
+                borderColor: isLight ? '#ffffff' : '#0b0f19',
+                borderWidth: 2
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: textColor, font: { size: 11, weight: 'bold' }, padding: 12 }
+                },
+                tooltip: {
+                    callbacks: {
+                        label: function(context) {
+                            const value = context.raw || 0;
+                            const total = context.chart.data.datasets[0].data.reduce((a, b) => a + b, 0);
+                            const pct = total > 0 ? ((value / total) * 100).toFixed(1) : 0;
+                            return ` ${context.label}: $${value.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD (${pct}%)`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
 function renderPortfolio() {
     const listEl = document.getElementById('portfolioList');
     let grandTotalUSD = 0;
     let totalCostUSD = 0;
+
+    let chartLabels = [];
+    let chartValues = [];
 
     if (userPortfolio.length === 0) {
         listEl.innerHTML = '<div style="text-align:center; color:var(--text-sub); font-size:13px; margin:20px 0;">Tiada simpanan direkodkan lagi.</div>';
         document.getElementById('totalPortUSD').innerText = '$0.00 USD';
         document.getElementById('totalPortMYR').innerText = '≈ RM 0.00 MYR';
         document.getElementById('totalPortPnL').innerText = 'P&L: $0.00 USD / RM 0.00 MYR (0.00%)';
+        renderChart([], []);
         return;
     }
 
@@ -288,6 +376,9 @@ function renderPortfolio() {
         const totalValueUSD = item.amount * coinPriceUSD;
         const totalValueMYR = totalValueUSD * usdToMyr;
         grandTotalUSD += totalValueUSD;
+
+        chartLabels.push(item.symbol);
+        chartValues.push(totalValueUSD);
 
         let buyPriceUSD = item.buyPriceUSD || 0;
         let buyPriceMYR = buyPriceUSD * usdToMyr;
@@ -342,6 +433,8 @@ function renderPortfolio() {
         document.getElementById('totalPortPnL').innerText = 'Masukkan harga belian purata untuk mengira P&L.';
         document.getElementById('totalPortPnL').style.color = 'var(--text-muted)';
     }
+
+    renderChart(chartLabels, chartValues);
 }
 
 function exportPortfolio() {
