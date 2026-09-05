@@ -114,6 +114,7 @@
         .summary-pnl { font-size: 12px; font-weight: bold; margin-top: 6px; font-family: monospace; }
         
         .port-item { background: var(--bg-input); border: 1px solid var(--border-sub); padding: 12px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .btn-edit { background: var(--accent); border: none; color: #0b0f19; padding: 6px 10px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; margin-right: 4px; }
         .btn-delete { background: #ef4444; border: none; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; }
 
         .info-card { background: var(--bg-input); border: 1px solid var(--border-sub); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
@@ -197,7 +198,7 @@
             <div class="input-card">
                 <div class="form-group">
                     <label>Pilih Koin</label>
-                    <select id="portCoinSelect"></select>
+                    <select id="portCoinSelect" onchange="checkEditMode()"></select>
                 </div>
                 <div class="form-group">
                     <label>Jumlah Pegangan</label>
@@ -207,7 +208,7 @@
                     <label>Harga Belian Purata - USD (Pilihan P&amp;L)</label>
                     <input type="number" id="portCoinBuyPrice" placeholder="Contoh: 0.45" min="0" step="any">
                 </div>
-                <button class="btn-add" onclick="addPortfolioItem()">Tambah Aset Simpanan</button>
+                <button class="btn-add" id="btnSavePortfolio" onclick="addPortfolioItem()">Tambah Aset Simpanan</button>
             </div>
 
             <div class="port-actions">
@@ -676,6 +677,30 @@ function bindChartEvents(canvas) {
     canvas.addEventListener('touchstart', handleMove);
 }
 
+function checkEditMode() {
+    const symbol = document.getElementById('portCoinSelect').value;
+    const btn = document.getElementById('btnSavePortfolio');
+    const existing = userPortfolio.find(item => item.symbol === symbol);
+    
+    if (existing) {
+        btn.innerText = 'Kemaskini Aset Simpanan';
+    } else {
+        btn.innerText = 'Tambah Aset Simpanan';
+    }
+}
+
+function editPortfolioItem(symbol) {
+    const existing = userPortfolio.find(item => item.symbol === symbol);
+    if (!existing) return;
+
+    document.getElementById('portCoinSelect').value = symbol;
+    document.getElementById('portCoinAmount').value = existing.amount;
+    document.getElementById('portCoinBuyPrice').value = existing.buyPrice || '';
+    
+    checkEditMode();
+    document.getElementById('portCoinAmount').focus();
+}
+
 function addPortfolioItem() {
     const symbol = document.getElementById('portCoinSelect').value;
     const amount = parseFloat(document.getElementById('portCoinAmount').value);
@@ -685,8 +710,8 @@ function addPortfolioItem() {
 
     const existingIndex = userPortfolio.findIndex(item => item.symbol === symbol);
     if (existingIndex > -1) {
-        userPortfolio[existingIndex].amount += amount;
-        if (buyPrice > 0) userPortfolio[existingIndex].buyPrice = buyPrice;
+        userPortfolio[existingIndex].amount = amount;
+        userPortfolio[existingIndex].buyPrice = buyPrice;
     } else {
         userPortfolio.push({ symbol, amount, buyPrice });
     }
@@ -694,12 +719,14 @@ function addPortfolioItem() {
     localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
     document.getElementById('portCoinAmount').value = '';
     document.getElementById('portCoinBuyPrice').value = '';
+    checkEditMode();
     renderPortfolio();
 }
 
 function deletePortfolioItem(symbol) {
     userPortfolio = userPortfolio.filter(item => item.symbol !== symbol);
     localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
+    checkEditMode();
     renderPortfolio();
 }
 
@@ -712,41 +739,56 @@ function renderPortfolio() {
         listEl.innerHTML = '<div class="status-msg">Tiada simpanan direkodkan lagi.</div>';
         document.getElementById('totalPortUSD').innerText = '$0.00 USD';
         document.getElementById('totalPortMYR').innerText = '≈ RM 0.00 MYR';
-        document.getElementById('totalPortPnL').innerText = 'P&L: $0.00 (0.00%)';
+        document.getElementById('totalPortPnL').innerText = 'P&L: $0.00 USD (RM 0.00) (0.00%)';
         document.getElementById('totalPortPnL').className = 'summary-pnl';
         return;
     }
 
     listEl.innerHTML = '';
     userPortfolio.forEach(item => {
-        const coinPrice = marketData[item.symbol]?.priceUSD || 0;
-        const totalValueUSD = item.amount * coinPrice;
+        const coinPriceUSD = marketData[item.symbol]?.priceUSD || 0;
+        const coinPriceMYR = coinPriceUSD * usdToMyr;
+        
+        const totalValueUSD = item.amount * coinPriceUSD;
+        const totalValueMYR = totalValueUSD * usdToMyr;
         grandTotalUSD += totalValueUSD;
 
-        let buyPrice = item.buyPrice || 0;
-        let itemCostUSD = item.amount * buyPrice;
+        let buyPriceUSD = item.buyPrice || 0;
+        let buyPriceMYR = buyPriceUSD * usdToMyr;
+        let itemCostUSD = item.amount * buyPriceUSD;
         totalCostUSD += itemCostUSD;
 
         let pnlText = '';
-        if (buyPrice > 0) {
-            let itemPnL = totalValueUSD - itemCostUSD;
-            let itemPnLPct = (itemPnL / itemCostUSD) * 100;
-            let isPos = itemPnL >= 0;
-            pnlText = `<div style="font-size:11px; font-weight:bold; color:${isPos ? '#4ade80' : '#f87171'};">
-                P&L: ${isPos ? '+' : ''}$${itemPnL.toFixed(2)} (${isPos ? '+' : ''}${itemPnLPct.toFixed(2)}%)
+        if (buyPriceUSD > 0) {
+            let itemPnLUSD = totalValueUSD - itemCostUSD;
+            let itemPnLMYR = itemPnLUSD * usdToMyr;
+            let itemPnLPct = (itemPnLUSD / itemCostUSD) * 100;
+            let isPos = itemPnLUSD >= 0;
+            
+            pnlText = `<div style="font-size:11px; font-weight:bold; color:${isPos ? '#4ade80' : '#f87171'}; margin-top:2px;">
+                P&L: ${isPos ? '+' : ''}$${itemPnLUSD.toFixed(2)} USD (RM ${itemPnLMYR.toFixed(2)}) (${isPos ? '+' : ''}${itemPnLPct.toFixed(2)}%)
             </div>`;
         }
+
+        let buyPriceText = buyPriceUSD > 0 
+            ? `@ $${buyPriceUSD.toFixed(2)} USD (RM ${buyPriceMYR.toFixed(2)})` 
+            : '';
 
         listEl.innerHTML += `
             <div class="port-item">
                 <div>
                     <div style="font-weight:bold; font-size:14px; color:var(--text-main);">${item.symbol}</div>
-                    <div style="font-size:11px; color:var(--text-sub);">${item.amount.toLocaleString()} ${item.symbol} ${buyPrice > 0 ? '@ $' + buyPrice : ''}</div>
+                    <div style="font-size:11px; color:var(--text-sub);">${item.amount.toLocaleString()} ${item.symbol} ${buyPriceText}</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Harga Semasa: $${coinPriceUSD.toFixed(2)} USD (RM ${coinPriceMYR.toFixed(2)})</div>
                 </div>
                 <div style="text-align:right;">
-                    <div style="font-weight:bold; font-size:14px; color:var(--accent);">$${totalValueUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
+                    <div style="font-weight:bold; font-size:14px; color:var(--accent);">$${totalValueUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD</div>
+                    <div style="font-size:11px; font-weight:600; color:var(--text-sub);">≈ RM ${totalValueMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} MYR</div>
                     ${pnlText}
-                    <button class="btn-delete" style="margin-top:4px;" onclick="deletePortfolioItem('${item.symbol}')">Padam</button>
+                    <div style="margin-top:6px;">
+                        <button class="btn-edit" onclick="editPortfolioItem('${item.symbol}')">Edit</button>
+                        <button class="btn-delete" onclick="deletePortfolioItem('${item.symbol}')">Padam</button>
+                    </div>
                 </div>
             </div>
         `;
@@ -757,11 +799,13 @@ function renderPortfolio() {
     document.getElementById('totalPortMYR').innerText = `≈ RM ${grandTotalMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} MYR`;
 
     if (totalCostUSD > 0) {
-        let totalPnL = grandTotalUSD - totalCostUSD;
-        let totalPnLPct = (totalPnL / totalCostUSD) * 100;
-        let isPos = totalPnL >= 0;
+        let totalPnLUSD = grandTotalUSD - totalCostUSD;
+        let totalPnLMYR = totalPnLUSD * usdToMyr;
+        let totalPnLPct = (totalPnLUSD / totalCostUSD) * 100;
+        let isPos = totalPnLUSD >= 0;
         const pnlEl = document.getElementById('totalPortPnL');
-        pnlEl.innerText = `P&L Keseluruhan: ${isPos ? '+' : ''}$${totalPnL.toFixed(2)} (${isPos ? '+' : ''}${totalPnLPct.toFixed(2)}%)`;
+        
+        pnlEl.innerText = `P&L Keseluruhan: ${isPos ? '+' : ''}$${totalPnLUSD.toFixed(2)} USD (RM ${totalPnLMYR.toFixed(2)}) (${isPos ? '+' : ''}${totalPnLPct.toFixed(2)}%)`;
         pnlEl.style.color = isPos ? '#4ade80' : '#f87171';
     } else {
         document.getElementById('totalPortPnL').innerText = 'Masukkan harga belian purata untuk mengira P&L.';
@@ -791,6 +835,7 @@ function importPortfolio(event) {
             if (Array.isArray(importedData)) {
                 userPortfolio = importedData;
                 localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
+                checkEditMode();
                 renderPortfolio();
                 alert('Portfolio berjaya diimport!');
             } else {
@@ -805,10 +850,14 @@ function importPortfolio(event) {
 
 function updateInfoTab() {
     if (marketData['BTC']) {
-        document.getElementById('infoBtcPrice').innerText = `$${marketData['BTC'].priceUSD.toLocaleString()}`;
+        const btcUSD = marketData['BTC'].priceUSD;
+        const btcMYR = btcUSD * usdToMyr;
+        document.getElementById('infoBtcPrice').innerText = `$${btcUSD.toLocaleString()} USD (RM ${btcMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})})`;
     }
     if (marketData['ETH']) {
-        document.getElementById('infoEthPrice').innerText = `$${marketData['ETH'].priceUSD.toLocaleString()}`;
+        const ethUSD = marketData['ETH'].priceUSD;
+        const ethMYR = ethUSD * usdToMyr;
+        document.getElementById('infoEthPrice').innerText = `$${ethUSD.toLocaleString()} USD (RM ${ethMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})})`;
     }
 }
 
