@@ -17,6 +17,7 @@
             --text-sub: #64748b;
             --text-muted: #94a3b8;
             --accent: #38bdf8;
+            --accent-hover: #0284c7;
         }
 
         body.light-mode {
@@ -29,6 +30,7 @@
             --text-sub: #64748b;
             --text-muted: #475569;
             --accent: #0284c7;
+            --accent-hover: #0369a1;
         }
 
         * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
@@ -45,9 +47,18 @@
         .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); font-weight: bold; font-size: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: center; text-decoration: none; }
         .tab-btn.active { background: var(--accent); color: #0b0f19; }
 
-        .info-card { background: var(--bg-input); border: 1px solid var(--border-sub); border-radius: 12px; padding: 14px; margin-bottom: 12px; }
-        .info-title { font-size: 13px; font-weight: bold; color: var(--accent); margin-bottom: 6px; }
-        .info-desc { font-size: 11px; color: var(--text-muted); line-height: 1.6; }
+        /* Panel Carian & Tapisan */
+        .filter-card { background: var(--bg-input); border: 1px solid var(--border-sub); border-radius: 14px; padding: 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 10px; }
+        .filter-card input { width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 12px; border-radius: 8px; font-size: 13px; outline: none; }
+        .filter-options { display: flex; gap: 8px; }
+        .filter-options select { flex: 1; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 8px 10px; border-radius: 8px; font-size: 12px; outline: none; }
+
+        .market-item { background: var(--bg-input); border: 1px solid var(--border-sub); padding: 12px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .coin-symbol { font-weight: bold; font-size: 14px; color: var(--text-main); }
+        .coin-name { font-size: 11px; color: var(--text-sub); }
+        .price-usd { font-weight: bold; font-size: 13px; color: var(--text-main); text-align: right; }
+        .price-myr { font-size: 11px; color: var(--accent); font-weight: 600; text-align: right; }
+        .change-pct { font-size: 11px; font-weight: bold; font-family: monospace; text-align: right; margin-top: 2px; }
     </style>
 </head>
 <body>
@@ -56,7 +67,7 @@
     <div class="header">
         <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">☀️ Mod Terang</button>
         <h1>FinCrypto Suite</h1>
-        <p>Maklumat &amp; Penanda Aras Pasaran</p>
+        <p>Info Pasaran Kripto Live</p>
     </div>
 
     <div class="nav-tabs">
@@ -65,38 +76,48 @@
         <a href="info.html" class="tab-btn active">Info Pasaran</a>
     </div>
 
-    <div class="info-card" style="border-color: var(--accent);">
-        <div class="info-title">Status Penanda Aras Pasaran</div>
-        <div style="display:flex; justify-content:space-between; margin-top:10px;">
-            <div>
-                <span style="font-size:11px; color:var(--text-sub); font-weight:bold;">BITCOIN (BTC)</span>
-                <div style="font-size:14px; font-weight:bold; color:var(--text-main);" id="infoBtcPrice">$0.00 USD</div>
-                <div style="font-size:11px; color:var(--accent);" id="infoBtcPriceMYR">≈ RM 0.00 MYR</div>
-            </div>
-            <div style="text-align:right;">
-                <span style="font-size:11px; color:var(--text-sub); font-weight:bold;">ETHEREUM (ETH)</span>
-                <div style="font-size:14px; font-weight:bold; color:var(--text-main);" id="infoEthPrice">$0.00 USD</div>
-                <div style="font-size:11px; color:var(--accent);" id="infoEthPriceMYR">≈ RM 0.00 MYR</div>
-            </div>
+    <!-- Carian & Tapisan -->
+    <div class="filter-card">
+        <input type="text" id="searchInput" placeholder="Cari nama atau simbol (contoh: BTC, Solana)..." oninput="applyFilters()">
+        <div class="filter-options">
+            <select id="sortSelect" onchange="applyFilters()">
+                <option value="rank">Ikut Kedudukan (Market Cap)</option>
+                <option value="gainers">Top Gainers (24j)</option>
+                <option value="losers">Top Losers (24j)</option>
+                <option value="volume">Jumlah Dagangan (Volume)</option>
+            </select>
         </div>
     </div>
 
-    <div class="info-card">
-        <div class="info-title">💡 Penukaran Mata Wang Dwi-Sistem</div>
-        <div class="info-desc">
-            Sistem FinCrypto kini menyokong input serta paparan lengkap dalam nilai **USD** dan **MYR** serentak untuk memudahkan pengiraan keuntungan daripada pembelian pelbagai platform tempatan dan antarabangsa.
-        </div>
-    </div>
-
-    <div class="info-card">
-        <div class="info-title">🔒 Keselamatan &amp; Data Tempat</div>
-        <div class="info-desc">
-            Semua rekod portfolio disimpan secara selamat di dalam pelayar anda sendiri (*Local Storage*). Tiada data peribadi atau maklumat akaun dihantar ke mana-mana pelayan luaran.
-        </div>
+    <div id="marketList">
+        <div style="text-align:center; color:var(--text-sub); font-size:13px; margin:20px 0;">Memuatkan data pasaran terkini...</div>
     </div>
 </div>
 
 <script>
+const coinsList = [
+    { symbol: 'POL', geckoId: 'polygon-ecosystem-token' },
+    { symbol: 'ADA', geckoId: 'cardano' },
+    { symbol: 'BTC', geckoId: 'bitcoin' },
+    { symbol: 'ETH', geckoId: 'ethereum' },
+    { symbol: 'XRP', geckoId: 'ripple' },
+    { symbol: 'SOL', geckoId: 'solana' },
+    { symbol: 'DOT', geckoId: 'polkadot' },
+    { symbol: 'UNI', geckoId: 'uniswap' },
+    { symbol: 'LTC', geckoId: 'litecoin' },
+    { symbol: 'BCH', geckoId: 'bitcoin-cash' },
+    { symbol: 'AVAX', geckoId: 'avalanche-2' },
+    { symbol: 'NEAR', geckoId: 'near' },
+    { symbol: 'FTM', geckoId: 'fantom' },
+    { symbol: 'LINK', geckoId: 'chainlink' },
+    { symbol: 'DOGE', geckoId: 'dogecoin' },
+    { symbol: 'SHIB', geckoId: 'shiba-inu' },
+    { symbol: 'SUI', geckoId: 'sui' },
+    { symbol: 'APT', geckoId: 'aptos' },
+    { symbol: 'AAVE', geckoId: 'aave' }
+];
+
+let rawMarketData = [];
 let usdToMyr = 4.45;
 
 function toggleTheme() {
@@ -118,23 +139,72 @@ async function fetchMarketData() {
             const myrData = await myrRes.json();
             if (myrData?.rates?.MYR) usdToMyr = myrData.rates.MYR;
         }
-
-        const res = await fetch('https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=bitcoin,ethereum');
-        const data = await res.json();
-        
-        data.forEach(item => {
-            let priceUSD = item.current_price || 0;
-            let priceMYR = priceUSD * usdToMyr;
-            if (item.id === 'bitcoin') {
-                document.getElementById('infoBtcPrice').innerText = `$${priceUSD.toLocaleString()} USD`;
-                document.getElementById('infoBtcPriceMYR').innerText = `≈ RM ${priceMYR.toLocaleString(undefined, {minimumFractionDigits: 2})} MYR`;
-            }
-            if (item.id === 'ethereum') {
-                document.getElementById('infoEthPrice').innerText = `$${priceUSD.toLocaleString()} USD`;
-                document.getElementById('infoEthPriceMYR').innerText = `≈ RM ${priceMYR.toLocaleString(undefined, {minimumFractionDigits: 2})} MYR`;
-            }
-        });
     } catch (e) {}
+
+    try {
+        const ids = coinsList.map(c => c.geckoId).join(',');
+        const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&price_change_percentage=24h`);
+        rawMarketData = await res.json();
+        applyFilters();
+    } catch (err) {
+        document.getElementById('marketList').innerHTML = '<div style="text-align:center; color:#f87171; font-size:13px; margin:20px 0;">Gagal memuatkan data pasaran. Sila cuba lagi.</div>';
+    }
+}
+
+function applyFilters() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+    const sortBy = document.getElementById('sortSelect').value;
+
+    let filtered = rawMarketData.filter(coin => {
+        return coin.name.toLowerCase().includes(searchTerm) || coin.symbol.toLowerCase().includes(searchTerm);
+    });
+
+    if (sortBy === 'gainers') {
+        filtered.sort((a, b) => (b.price_change_percentage_24h || 0) - (a.price_change_percentage_24h || 0));
+    } else if (sortBy === 'losers') {
+        filtered.sort((a, b) => (a.price_change_percentage_24h || 0) - (b.price_change_percentage_24h || 0));
+    } else if (sortBy === 'volume') {
+        filtered.sort((a, b) => (b.total_volume || 0) - (a.total_volume || 0));
+    } else {
+        filtered.sort((a, b) => (a.market_cap_rank || 999) - (b.market_cap_rank || 999));
+    }
+
+    renderList(filtered);
+}
+
+function renderList(data) {
+    const listEl = document.getElementById('marketList');
+    if (data.length === 0) {
+        listEl.innerHTML = '<div style="text-align:center; color:var(--text-sub); font-size:13px; margin:20px 0;">Tiada koin ditemui.</div>';
+        return;
+    }
+
+    listEl.innerHTML = '';
+    data.forEach(coin => {
+        const priceUSD = coin.current_price || 0;
+        const priceMYR = priceUSD * usdToMyr;
+        const change24h = coin.price_change_percentage_24h || 0;
+        const isPos = change24h >= 0;
+
+        listEl.innerHTML += `
+            <div class="market-item">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <img src="${coin.image}" alt="${coin.name}" style="width:28px; height:28px; border-radius:50%;">
+                    <div>
+                        <div class="coin-symbol">${coin.symbol.toUpperCase()}</div>
+                        <div class="coin-name">${coin.name}</div>
+                    </div>
+                </div>
+                <div>
+                    <div class="price-usd">$${priceUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})} USD</div>
+                    <div class="price-myr">≈ RM ${priceMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})} MYR</div>
+                    <div class="change-pct" style="color: ${isPos ? '#4ade80' : '#f87171'};">
+                        24j: ${isPos ? '+' : ''}${change24h.toFixed(2)}%
+                    </div>
+                </div>
+            </div>
+        `;
+    });
 }
 
 fetchMarketData();
