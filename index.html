@@ -3,221 +3,369 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>FinCrypto Suite - Kalkulator</title>
-    <link rel="manifest" href="manifest.json">
-    <meta name="theme-color" content="#0b0f19">
+    <title>FinCrypto Suite</title>
     <style>
         :root {
-            --bg-body: #0b0f19;
-            --bg-card: #161e2e;
-            --bg-input: #0f172a;
-            --border-color: #243044;
-            --border-sub: #1e293b;
-            --text-main: #f8fafc;
-            --text-sub: #64748b;
-            --text-muted: #94a3b8;
-            --accent: #38bdf8;
-            --accent-hover: #0284c7;
+            --bg-body: #080c14;
+            --bg-card: #121927;
+            --bg-inner: #1a2333;
+            --border-color: #2a384e;
+            --accent-cyan: #38bdf8;
+            --accent-glow: rgba(56, 189, 248, 0.4);
+            --text-main: #ffffff;
+            --text-sub: #94a3b8;
         }
 
-        body.light-mode {
-            --bg-body: #f1f5f9;
-            --bg-card: #ffffff;
-            --bg-input: #f8fafc;
-            --border-color: #cbd5e1;
-            --border-sub: #e2e8f0;
-            --text-main: #0f172a;
-            --text-sub: #64748b;
-            --text-muted: #475569;
-            --accent: #0284c7;
-            --accent-hover: #0369a1;
+        * { box-sizing: border-box; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 0; }
+        
+        body { 
+            background: var(--bg-body); 
+            color: var(--text-main); 
+            min-height: 100vh; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            padding: 20px; 
         }
 
-        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
-        body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; padding: 20px; display: flex; justify-content: center; align-items: center; }
-        
-        .container { background: var(--bg-card); border: 1px solid var(--border-color); width: 100%; max-width: 520px; border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        
-        /* Header Tanpa Pertindihan */
-        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; position: relative; }
-        .header-spacer { width: 36px; }
-        .header-title-group { text-align: center; flex: 1; }
-        .header h1 { font-size: 20px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; line-height: 1.2; }
-        .header p { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
+        .main-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            width: 100%;
+            max-width: 480px;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.15);
+        }
 
-        .theme-toggle-btn { width: 36px; height: 36px; background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-main); border-radius: 10px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s, transform 0.1s; flex-shrink: 0; }
-        .theme-toggle-btn:active { transform: scale(0.92); }
+        .header { text-align: center; margin-bottom: 16px; }
+        .header h1 { 
+            color: var(--accent-cyan); 
+            font-size: 26px; 
+            letter-spacing: 2px; 
+            text-transform: uppercase; 
+            font-weight: 800;
+        }
+        .header p { color: var(--text-sub); font-size: 13px; margin-top: 4px; }
 
-        .nav-tabs { display: flex; background: var(--bg-input); border-radius: 10px; border: 1px solid var(--border-sub); padding: 4px; margin-bottom: 16px; }
-        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); font-weight: bold; font-size: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: center; text-decoration: none; }
-        .tab-btn.active { background: var(--accent); color: #0b0f19; }
+        .status-pill {
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            border-radius: 20px;
+            padding: 8px 16px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            color: var(--text-sub);
+            margin-bottom: 20px;
+        }
+        .status-dot { color: #22c55e; margin-right: 4px; }
 
-        /* Numpad & Layout Display Kalkulator Asal */
-        .display-screen { background: var(--bg-input); border: 1px solid var(--border-sub); border-radius: 14px; padding: 16px; margin-bottom: 16px; text-align: right; }
-        .screen-label { font-size: 11px; color: var(--text-sub); font-weight: bold; text-transform: uppercase; text-align: left; margin-bottom: 4px; }
-        .screen-value { font-size: 28px; font-weight: bold; color: var(--accent); font-family: monospace; word-break: break-all; }
-        .screen-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+        .converter-box {
+            background: var(--bg-inner);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 16px;
+            margin-bottom: 20px;
+        }
 
-        .input-selection { display: flex; gap: 8px; margin-bottom: 16px; }
-        .field-btn { flex: 1; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-muted); border-radius: 10px; font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; }
-        .field-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(56, 189, 248, 0.1); }
+        .converter-title {
+            text-align: center;
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 16px;
+        }
 
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
-        .num-btn { background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-main); font-size: 18px; font-weight: bold; padding: 16px; border-radius: 12px; cursor: pointer; transition: 0.1s; }
-        .num-btn:active { background: var(--border-sub); transform: scale(0.96); }
-        .num-btn.action { color: #f87171; }
-        .num-btn.confirm { background: var(--accent); color: #0b0f19; grid-column: span 2; }
+        .row-group { display: flex; gap: 12px; margin-bottom: 10px; }
+        .col-group { flex: 1; }
+
+        label { display: block; font-size: 11px; color: var(--text-sub); margin-bottom: 6px; }
+
+        select, input {
+            width: 100%;
+            background: #0f172a;
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 14px;
+            outline: none;
+        }
+        input[readonly] { background: #162032; color: #94a3b8; }
+
+        .swap-wrapper { text-align: center; margin: -4px 0 8px 0; }
+        .swap-btn {
+            background: #0f172a;
+            border: 1px solid var(--accent-cyan);
+            color: var(--accent-cyan);
+            padding: 4px 16px;
+            border-radius: 12px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: all 0.2s;
+        }
+        .swap-btn:hover { background: var(--accent-cyan); color: #0f172a; }
+
+        .estimates-grid { display: flex; gap: 12px; margin-top: 16px; }
+        .estimate-card {
+            flex: 1;
+            background: #0f172a;
+            border: 1px solid var(--accent-cyan);
+            box-shadow: 0 0 10px var(--accent-glow);
+            border-radius: 10px;
+            padding: 12px;
+            text-align: center;
+        }
+        .estimate-card label { color: var(--accent-cyan); font-size: 11px; }
+        .estimate-value { font-size: 18px; font-weight: bold; margin-top: 4px; }
+
+        .ranking-title { font-size: 13px; font-weight: bold; color: var(--text-sub); margin-bottom: 10px; }
+
+        .ranking-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        .ranking-item {
+            background: #1e293b;
+            border-radius: 8px;
+            padding: 10px 14px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 13px;
+            font-weight: 600;
+        }
+
+        .btn-refresh {
+            width: 100%;
+            padding: 12px;
+            background: transparent;
+            border: 1px solid var(--accent-cyan);
+            box-shadow: 0 0 10px var(--accent-glow);
+            color: var(--accent-cyan);
+            border-radius: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+        .btn-refresh:hover { background: rgba(56, 189, 248, 0.1); }
     </style>
 </head>
 <body>
 
-<div class="container">
+<div class="main-card">
     <div class="header">
-        <div class="header-spacer"></div>
-        <div class="header-title-group">
-            <h1>FinCrypto Suite</h1>
-            <p>Kalkulator Anggaran Koin</p>
+        <h1>FINCRYPTO SUITE</h1>
+        <p>Crypto Converter, USD/MYR Value &amp; Automatic Ranking</p>
+    </div>
+
+    <div class="status-pill">
+        <div><span class="status-dot">●</span> Status: <span id="statusText" style="color:#22c55e;">Connected (CoinGecko)</span></div>
+        <div>USD/MYR Rate: <span id="rateDisplay">RM --</span></div>
+    </div>
+
+    <div class="converter-box">
+        <div class="converter-title">Kalkulator Penukaran Kripto</div>
+        
+        <div class="row-group">
+            <div class="col-group">
+                <label>Base crypto</label>
+                <select id="baseCoin" onchange="calculate()"></select>
+            </div>
+            <div class="col-group">
+                <label>Value</label>
+                <input type="number" id="baseValue" value="1000" oninput="calculate()">
+            </div>
         </div>
-        <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn" title="Tukar Mod Tema">☀️</button>
+
+        <div class="swap-wrapper">
+            <button class="swap-btn" onclick="swapCoins()">Swap</button>
+        </div>
+
+        <div class="row-group">
+            <div class="col-group">
+                <label>To</label>
+                <select id="targetCoin" onchange="calculate()"></select>
+            </div>
+            <div class="col-group">
+                <label>Readonly</label>
+                <input type="text" id="targetValue" readonly placeholder="0.00">
+            </div>
+        </div>
+
+        <div class="estimates-grid">
+            <div class="estimate-card">
+                <label>Estimated Value (USD)</label>
+                <div class="estimate-value" id="valUSD">$ 0.00</div>
+            </div>
+            <div class="estimate-card">
+                <label>Estimated Value (MYR)</label>
+                <div class="estimate-value" id="valMYR">RM 0.00</div>
+            </div>
+        </div>
     </div>
 
-    <div class="nav-tabs">
-        <a href="index.html" class="tab-btn active">Kalkulator</a>
-        <a href="portfolio.html" class="tab-btn">Portfolio Saya</a>
-        <a href="info.html" class="tab-btn">Info Pasaran</a>
-    </div>
+    <div class="ranking-title">Analisis Ranking (Paling Berbaloi → Kurang Berbaloi)</div>
+    <div class="ranking-list" id="rankingList"></div>
 
-    <div class="display-screen">
-        <div class="screen-label" id="activeFieldLabel">Modal (MYR)</div>
-        <div class="screen-value" id="activeFieldValue">0</div>
-        <div class="screen-sub" id="calcSummarySub">Hasil: 0.00 Koin (Modal: $0.00 USD)</div>
-    </div>
-
-    <div class="input-selection">
-        <button class="field-btn active" id="btnFieldMYR" onclick="selectField('MYR')">Modal (MYR)</button>
-        <button class="field-btn" id="btnFieldRate" onclick="selectField('RATE')">Kadar USD/MYR</button>
-        <button class="field-btn" id="btnFieldTarget" onclick="selectField('TARGET')">Harga Koin ($)</button>
-    </div>
-
-    <div class="numpad">
-        <button class="num-btn" onclick="appendNum('7')">7</button>
-        <button class="num-btn" onclick="appendNum('8')">8</button>
-        <button class="num-btn" onclick="appendNum('9')">9</button>
-        <button class="num-btn" onclick="appendNum('4')">4</button>
-        <button class="num-btn" onclick="appendNum('5')">5</button>
-        <button class="num-btn" onclick="appendNum('6')">6</button>
-        <button class="num-btn" onclick="appendNum('1')">1</button>
-        <button class="num-btn" onclick="appendNum('2')">2</button>
-        <button class="num-btn" onclick="appendNum('3')">3</button>
-        <button class="num-btn" onclick="appendNum('.')">.</button>
-        <button class="num-btn" onclick="appendNum('0')">0</button>
-        <button class="num-btn action" onclick="clearActive()">C</button>
-        <button class="num-btn action" onclick="backspace()">⌫</button>
-        <button class="num-btn confirm" onclick="nextField()">Seterusnya ➔</button>
-    </div>
+    <button class="btn-refresh" onclick="fetchData()">🔄 Refresh Prices</button>
 </div>
 
 <script>
-let activeField = 'MYR';
-let inputs = {
-    MYR: '1000',
-    RATE: '4.45',
-    TARGET: '0.50'
-};
+const coinsList = [
+    { symbol: 'ADA', name: 'Cardano (ADA)', id: 'cardano' },
+    { symbol: 'XRP', name: 'Ripple (XRP)', id: 'ripple' },
+    { symbol: 'DOGE', name: 'Dogecoin (DOGE)', id: 'dogecoin' },
+    { symbol: 'SOL', name: 'Solana (SOL)', id: 'solana' },
+    { symbol: 'ETH', name: 'Ethereum (ETH)', id: 'ethereum' },
+    { symbol: 'BTC', name: 'Bitcoin (BTC)', id: 'bitcoin' }
+];
 
-function toggleTheme() {
-    document.body.classList.toggle('light-mode');
-    const isLight = document.body.classList.contains('light-mode');
-    document.getElementById('themeBtn').innerText = isLight ? '🌙' : '☀️';
-    localStorage.setItem('themePreference', isLight ? 'light' : 'dark');
-}
+let marketPrices = {};
+let marketChanges = {};
+let myrRate = 4.45;
 
-if (localStorage.getItem('themePreference') === 'light') {
-    document.body.classList.add('light-mode');
-    document.getElementById('themeBtn').innerText = '🌙';
-}
-
-function updateDisplay() {
-    document.getElementById('activeFieldValue').innerText = inputs[activeField] || '0';
+function init() {
+    const baseSel = document.getElementById('baseCoin');
+    const targetSel = document.getElementById('targetCoin');
     
-    const myr = parseFloat(inputs.MYR) || 0;
-    const rate = parseFloat(inputs.RATE) || 4.45;
-    const target = parseFloat(inputs.TARGET) || 0;
+    baseSel.innerHTML = '';
+    targetSel.innerHTML = '';
 
-    const usd = myr / rate;
-    const coins = target > 0 ? (usd / target) : 0;
+    coinsList.forEach(c => {
+        baseSel.add(new Option(c.name, c.symbol));
+        targetSel.add(new Option(c.name, c.symbol));
+    });
 
-    document.getElementById('calcSummarySub').innerText = 
-        `Hasil: ${coins.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})} Koin (Modal: $${usd.toFixed(2)} USD)`;
-}
-
-function selectField(field) {
-    activeField = field;
-    document.querySelectorAll('.field-btn').forEach(btn => btn.classList.remove('active'));
+    baseSel.value = 'ADA';
+    targetSel.value = 'XRP';
     
-    if (field === 'MYR') {
-        document.getElementById('btnFieldMYR').classList.add('active');
-        document.getElementById('activeFieldLabel').innerText = 'Modal (MYR)';
-    } else if (field === 'RATE') {
-        document.getElementById('btnFieldRate').classList.add('active');
-        document.getElementById('activeFieldLabel').innerText = 'Kadar Pertukaran USD/MYR';
-    } else if (field === 'TARGET') {
-        document.getElementById('btnFieldTarget').classList.add('active');
-        document.getElementById('activeFieldLabel').innerText = 'Harga Sasaran Koin (USD)';
-    }
-    updateDisplay();
+    fetchData();
 }
 
-function appendNum(num) {
-    if (inputs[activeField] === '0' && num !== '.') {
-        inputs[activeField] = num;
-    } else {
-        if (num === '.' && inputs[activeField].includes('.')) return;
-        inputs[activeField] += num;
-    }
-    updateDisplay();
-}
+async function fetchData() {
+    document.getElementById('statusText').innerText = 'Kemaskini...';
+    document.getElementById('statusText').style.color = '#eab308';
 
-function clearActive() {
-    inputs[activeField] = '0';
-    updateDisplay();
-}
-
-function backspace() {
-    let str = inputs[activeField];
-    if (str.length > 1) {
-        inputs[activeField] = str.slice(0, -1);
-    } else {
-        inputs[activeField] = '0';
-    }
-    updateDisplay();
-}
-
-function nextField() {
-    if (activeField === 'MYR') selectField('RATE');
-    else if (activeField === 'RATE') selectField('TARGET');
-    else if (activeField === 'TARGET') selectField('MYR');
-}
-
-async function fetchExchangeRate() {
     try {
-        const res = await fetch('https://open.er-api.com/v6/latest/USD');
-        if (res.ok) {
-            const data = await res.json();
-            if (data?.rates?.MYR) {
-                inputs.RATE = data.rates.MYR.toFixed(2);
-                updateDisplay();
-            }
+        const myrRes = await fetch('https://open.er-api.com/v6/latest/USD');
+        if (myrRes.ok) {
+            const myrData = await myrRes.json();
+            if (myrData?.rates?.MYR) myrRate = myrData.rates.MYR;
         }
     } catch (e) {}
+
+    document.getElementById('rateDisplay').innerText = `RM ${myrRate.toFixed(2)}`;
+
+    try {
+        const ids = coinsList.map(c => c.id).join(',');
+        const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}&price_change_percentage=24h`);
+        const data = await res.json();
+        
+        data.forEach(item => {
+            const coin = coinsList.find(c => c.id === item.id);
+            if (coin) {
+                marketPrices[coin.symbol] = item.current_price || 0;
+                marketChanges[coin.symbol] = item.price_change_percentage_24h || 0;
+            }
+        });
+
+        document.getElementById('statusText').innerText = 'Connected (CoinGecko)';
+        document.getElementById('statusText').style.color = '#22c55e';
+        calculate();
+    } catch (e) {
+        // Fallback simulasi jika API mempunyai had capaian
+        marketPrices = { 'ADA': 0.60, 'XRP': 0.55, 'DOGE': 0.15, 'SOL': 140, 'ETH': 3400, 'BTC': 65000 };
+        marketChanges = { 'ADA': 3.5, 'XRP': -1.2, 'DOGE': 5.0, 'SOL': 0.8, 'ETH': -0.5, 'BTC': 1.1 };
+        document.getElementById('statusText').innerText = 'Mode Offline (Simulasi)';
+        document.getElementById('statusText').style.color = '#f87171';
+        calculate();
+    }
 }
 
-fetchExchangeRate();
-updateDisplay();
-
-if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('service-worker.js');
+function swapCoins() {
+    const baseSel = document.getElementById('baseCoin');
+    const targetSel = document.getElementById('targetCoin');
+    const temp = baseSel.value;
+    baseSel.value = targetSel.value;
+    targetSel.value = temp;
+    calculate();
 }
+
+function calculate() {
+    const base = document.getElementById('baseCoin').value;
+    const target = document.getElementById('targetCoin').value;
+    const amount = parseFloat(document.getElementById('baseValue').value) || 0;
+
+    const basePriceUSD = marketPrices[base] || 0;
+    const targetPriceUSD = marketPrices[target] || 0;
+
+    const totalUSD = amount * basePriceUSD;
+    const totalMYR = totalUSD * myrRate;
+    const convertedTarget = targetPriceUSD > 0 ? (totalUSD / targetPriceUSD) : 0;
+
+    document.getElementById('targetValue').value = convertedTarget.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4});
+    document.getElementById('valUSD').innerText = `$ ${totalUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+    document.getElementById('valMYR').innerText = `RM ${totalMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}`;
+
+    renderRanking(base, amount, totalMYR);
+}
+
+function renderRanking(baseSymbol, amount, totalMYR) {
+    const listEl = document.getElementById('rankingList');
+    listEl.innerHTML = '';
+
+    let items = [];
+
+    coinsList.forEach(c => {
+        if (c.symbol !== baseSymbol) {
+            const targetUSD = marketPrices[c.symbol] || 0;
+            const baseUSD = marketPrices[baseSymbol] || 0;
+            const converted = targetUSD > 0 ? (amount * baseUSD / targetUSD) : 0;
+            
+            // Pengiraan nisbah pertumbuhan relatif (24h)
+            const baseChange = marketChanges[baseSymbol] || 0;
+            const targetChange = marketChanges[c.symbol] || 0;
+            const relativeGrowth = (((1 + (baseChange / 100)) / (1 + (targetChange / 100))) - 1) * 100;
+
+            items.push({
+                symbol: c.symbol,
+                converted: converted,
+                relativeGrowth: relativeGrowth,
+                totalMYR: totalMYR
+            });
+        }
+    });
+
+    // Susun daripada paling berbaloi ke kurang berbaloi
+    items.sort((a, b) => b.relativeGrowth - a.relativeGrowth);
+
+    items.forEach(item => {
+        const isPos = item.relativeGrowth >= 0;
+        const statusTag = isPos ? '🔥 BERBALOI' : '⚠️ KURANG BERBALOI';
+        const colorStyle = isPos ? 'color: #4ade80;' : 'color: #f87171;';
+        const growthFormatted = (isPos ? '+' : '') + item.relativeGrowth.toFixed(2) + '%';
+
+        const row = document.createElement('div');
+        row.className = 'ranking-item';
+        row.innerHTML = `
+            <div>
+                <div>${baseSymbol} to ${item.symbol} (${item.converted.toLocaleString(undefined, {maximumFractionDigits: 2})} ${item.symbol})</div>
+                <div style="font-size: 11px; ${colorStyle} font-weight: bold; margin-top: 2px;">
+                    ${statusTag} (${growthFormatted})
+                </div>
+            </div>
+            <div style="text-align: right; font-family: monospace;">
+                RM ${item.totalMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}
+            </div>
+        `;
+        listEl.appendChild(row);
+    });
+}
+
+init();
 </script>
 
 </body>
