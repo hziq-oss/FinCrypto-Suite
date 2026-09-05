@@ -38,17 +38,21 @@
         body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; padding: 20px; display: flex; justify-content: center; align-items: center; }
         
         .container { background: var(--bg-card); border: 1px solid var(--border-color); width: 100%; max-width: 520px; border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
-        .header { text-align: center; margin-bottom: 16px; position: relative; }
-        .header h1 { font-size: 22px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; }
-        .header p { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
+        
+        /* Header Tanpa Pertindihan */
+        .header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; position: relative; }
+        .header-spacer { width: 36px; }
+        .header-title-group { text-align: center; flex: 1; }
+        .header h1 { font-size: 20px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; line-height: 1.2; }
+        .header p { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
 
-        .theme-toggle-btn { position: absolute; right: 0; top: 0; background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-main); padding: 6px 10px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: bold; }
+        .theme-toggle-btn { width: 36px; height: 36px; background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-main); border-radius: 10px; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.2s, transform 0.1s; flex-shrink: 0; }
+        .theme-toggle-btn:active { transform: scale(0.92); }
 
         .nav-tabs { display: flex; background: var(--bg-input); border-radius: 10px; border: 1px solid var(--border-sub); padding: 4px; margin-bottom: 16px; }
         .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); font-weight: bold; font-size: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: center; text-decoration: none; }
         .tab-btn.active { background: var(--accent); color: #0b0f19; }
 
-        /* Card Tetapan Kadar USD/MYR */
         .rate-card { background: var(--bg-input); border: 1px solid var(--border-sub); border-radius: 12px; padding: 12px 14px; margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; }
         .rate-header { display: flex; justify-content: space-between; align-items: center; font-size: 11px; font-weight: bold; color: var(--text-sub); text-transform: uppercase; }
         .rate-controls { display: flex; gap: 8px; align-items: center; }
@@ -89,9 +93,12 @@
 
 <div class="container">
     <div class="header">
-        <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">☀️ Mod Terang</button>
-        <h1>FinCrypto Suite</h1>
-        <p>Pengurusan Portfolio &amp; P&amp;L</p>
+        <div class="header-spacer"></div>
+        <div class="header-title-group">
+            <h1>FinCrypto Suite</h1>
+            <p>Pengurusan Portfolio &amp; P&amp;L</p>
+        </div>
+        <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn" title="Tukar Mod Tema">☀️</button>
     </div>
 
     <div class="nav-tabs">
@@ -100,7 +107,6 @@
         <a href="info.html" class="tab-btn">Info Pasaran</a>
     </div>
 
-    <!-- Tetapan Kadar USD/MYR -->
     <div class="rate-card">
         <div class="rate-header">
             <span>Kadar Pertukaran USD ➔ MYR</span>
@@ -199,6 +205,20 @@ const colorPalette = [
     '#f472b6', '#2dd4bf', '#fb923c', '#a3e635', '#60a5fa'
 ];
 
+function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    document.getElementById('themeBtn').innerText = isLight ? '🌙' : '☀️';
+    localStorage.setItem('themePreference', isLight ? 'light' : 'dark');
+    if (chartInstance) renderChart([], []);
+    renderPortfolio();
+}
+
+if (localStorage.getItem('themePreference') === 'light') {
+    document.body.classList.add('light-mode');
+    document.getElementById('themeBtn').innerText = '🌙';
+}
+
 function initRateSettings() {
     const mode = localStorage.getItem('rateMode') || 'auto';
     const customRate = localStorage.getItem('customRate') || '4.45';
@@ -240,20 +260,6 @@ function saveCustomRate() {
         document.getElementById('rateStatusLabel').innerText = `Manual: RM ${usdToMyr.toFixed(2)}`;
         renderPortfolio();
     }
-}
-
-function toggleTheme() {
-    document.body.classList.toggle('light-mode');
-    const isLight = document.body.classList.contains('light-mode');
-    document.getElementById('themeBtn').innerText = isLight ? '🌙 Mod Gelap' : '☀️ Mod Terang';
-    localStorage.setItem('themePreference', isLight ? 'light' : 'dark');
-    if (chartInstance) renderChart([], []);
-    renderPortfolio();
-}
-
-if (localStorage.getItem('themePreference') === 'light') {
-    document.body.classList.add('light-mode');
-    document.getElementById('themeBtn').innerText = '🌙 Mod Gelap';
 }
 
 function initDropdowns() {
