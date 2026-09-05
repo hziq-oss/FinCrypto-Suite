@@ -46,7 +46,6 @@
         .header h1 { font-size: 20px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; line-height: 1.2; }
         .header p { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
 
-        /* Butang Ikon Sahaja Untuk Elak Bertindih */
         .theme-toggle-btn { background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-main); width: 36px; height: 36px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.2s; }
         .theme-toggle-btn:active { transform: scale(0.9); }
 
@@ -65,6 +64,10 @@
         .form-group:last-child { margin-bottom: 0; }
         label { display: block; font-size: 11px; color: var(--text-sub); font-weight: bold; text-transform: uppercase; margin-bottom: 6px; }
         
+        .input-with-currency { display: flex; gap: 8px; }
+        .input-with-currency input { flex: 1; }
+        .input-with-currency select { width: 90px; flex-shrink: 0; font-weight: bold; }
+
         input[type="number"], input[type="text"], select { width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px; border-radius: 8px; font-size: 15px; outline: none; transition: 0.2s; }
         input[type="number"]:focus, input[type="text"]:focus, select:focus { border-color: var(--accent); }
 
@@ -220,8 +223,14 @@
                     <input type="number" id="portCoinAmount" placeholder="Contoh: 1500" min="0" step="any">
                 </div>
                 <div class="form-group">
-                    <label>Harga Belian Purata - USD (Pilihan P&amp;L)</label>
-                    <input type="number" id="portCoinBuyPrice" placeholder="Contoh: 0.45" min="0" step="any">
+                    <label>Harga Belian Purata &amp; Mata Wang</label>
+                    <div class="input-with-currency">
+                        <input type="number" id="portCoinBuyPrice" placeholder="Contoh: 0.45 atau 2.10" min="0" step="any">
+                        <select id="portCurrencySelect">
+                            <option value="USD">USD ($)</option>
+                            <option value="MYR">MYR (RM)</option>
+                        </select>
+                    </div>
                 </div>
                 <button class="btn-add" id="btnSavePortfolio" onclick="addPortfolioItem()">Tambah Aset Simpanan</button>
             </div>
@@ -356,7 +365,6 @@ function switchPage(pageId, btnElement) {
     document.getElementById(pageId).classList.add('active');
     if (btnElement) btnElement.classList.add('active');
     
-    // Simpan tab aktif ke sessionStorage (hilang bila app ditutup)
     sessionStorage.setItem('activeTab', pageId);
 
     if (pageId !== 'calculatorPage') closeChart();
@@ -775,6 +783,7 @@ function editPortfolioItem(symbol) {
     document.getElementById('portCoinSelect').value = symbol;
     document.getElementById('portCoinAmount').value = existing.amount;
     document.getElementById('portCoinBuyPrice').value = existing.buyPrice || '';
+    document.getElementById('portCurrencySelect').value = existing.currency || 'USD';
     
     checkEditMode();
     document.getElementById('portCoinAmount').focus();
@@ -784,6 +793,7 @@ function addPortfolioItem() {
     const symbol = document.getElementById('portCoinSelect').value;
     const amount = parseFloat(document.getElementById('portCoinAmount').value);
     const buyPrice = parseFloat(document.getElementById('portCoinBuyPrice').value) || 0;
+    const currency = document.getElementById('portCurrencySelect').value || 'USD';
 
     if (!amount || amount <= 0) return alert('Sila masukkan kuantiti yang sah.');
 
@@ -791,8 +801,9 @@ function addPortfolioItem() {
     if (existingIndex > -1) {
         userPortfolio[existingIndex].amount = amount;
         userPortfolio[existingIndex].buyPrice = buyPrice;
+        userPortfolio[existingIndex].currency = currency;
     } else {
-        userPortfolio.push({ symbol, amount, buyPrice });
+        userPortfolio.push({ symbol, amount, buyPrice, currency });
     }
 
     localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
@@ -820,7 +831,7 @@ function renderPortfolio() {
         listEl.innerHTML = '<div class="status-msg">Tiada simpanan direkodkan lagi.</div>';
         document.getElementById('totalPortUSD').innerText = '$0.00 USD';
         document.getElementById('totalPortMYR').innerText = '≈ RM 0.00 MYR';
-        document.getElementById('totalPortPnL').innerText = 'P&L: $0.00 USD (RM 0.00) (0.00%)';
+        document.getElementById('totalPortPnL').innerText = 'P&L: $0.00 (0.00%)';
         document.getElementById('totalPortPnL').className = 'summary-pnl';
         document.getElementById('allocationBox').style.display = 'none';
         return;
@@ -839,13 +850,25 @@ function renderPortfolio() {
 
         itemValues.push({ symbol: item.symbol, valueUSD: totalValueUSD });
 
-        let buyPriceUSD = item.buyPrice || 0;
-        let buyPriceMYR = buyPriceUSD * usdToMyr;
+        let buyPriceInput = item.buyPrice || 0;
+        let itemCurrency = item.currency || 'USD';
+        
+        let buyPriceUSD = 0;
+        let buyPriceMYR = 0;
+
+        if (itemCurrency === 'MYR') {
+            buyPriceMYR = buyPriceInput;
+            buyPriceUSD = buyPriceInput / usdToMyr;
+        } else {
+            buyPriceUSD = buyPriceInput;
+            buyPriceMYR = buyPriceInput * usdToMyr;
+        }
+
         let itemCostUSD = item.amount * buyPriceUSD;
         totalCostUSD += itemCostUSD;
 
         let pnlText = '';
-        if (buyPriceUSD > 0) {
+        if (buyPriceInput > 0) {
             let itemPnLUSD = totalValueUSD - itemCostUSD;
             let itemPnLMYR = itemPnLUSD * usdToMyr;
             let itemPnLPct = (itemPnLUSD / itemCostUSD) * 100;
@@ -856,9 +879,14 @@ function renderPortfolio() {
             </div>`;
         }
 
-        let buyPriceText = buyPriceUSD > 0 
-            ? `@ $${buyPriceUSD.toFixed(2)} USD (RM ${buyPriceMYR.toFixed(2)})` 
-            : '';
+        let buyPriceText = '';
+        if (buyPriceInput > 0) {
+            if (itemCurrency === 'MYR') {
+                buyPriceText = `@ RM ${buyPriceMYR.toFixed(2)} MYR ($${buyPriceUSD.toFixed(2)} USD)`;
+            } else {
+                buyPriceText = `@ $${buyPriceUSD.toFixed(2)} USD (RM ${buyPriceMYR.toFixed(2)})`;
+            }
+        }
 
         listEl.innerHTML += `
             <div class="port-item">
@@ -965,13 +993,13 @@ function calculateTargetProfit() {
         return;
     }
 
-    const currentPrice = marketData[symbol]?.priceUSD || 0;
     const estTotalUSD = item.amount * targetPrice;
     const estTotalMYR = estTotalUSD * usdToMyr;
 
     let pnlHtml = '';
     if (item.buyPrice > 0) {
-        const costUSD = item.amount * item.buyPrice;
+        let buyPriceUSD = item.currency === 'MYR' ? (item.buyPrice / usdToMyr) : item.buyPrice;
+        const costUSD = item.amount * buyPriceUSD;
         const pnlUSD = estTotalUSD - costUSD;
         const pnlMYR = pnlUSD * usdToMyr;
         const pnlPct = (pnlUSD / costUSD) * 100;
