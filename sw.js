@@ -1,4 +1,4 @@
-const CACHE_NAME = 'crypto-suite-v1';
+const CACHE_NAME = 'crypto-suite-v2';
 const ASSETS = [
   './',
   'index.html',
