@@ -52,16 +52,21 @@
         .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); font-weight: bold; font-size: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: center; text-decoration: none; }
         .tab-btn.active { background: var(--accent); color: #0b0f19; }
 
-        .input-card { background: var(--bg-input); border: 1px solid var(--border-sub); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
-        .form-group { margin-bottom: 12px; }
-        label { display: block; font-size: 11px; color: var(--text-sub); font-weight: bold; text-transform: uppercase; margin-bottom: 6px; }
-        
-        input[type="number"], select { width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px; border-radius: 8px; font-size: 15px; outline: none; }
-        
-        .result-card { background: linear-gradient(135deg, var(--bg-input), var(--bg-card)); border: 1px solid var(--border-color); border-radius: 14px; padding: 18px; text-align: center; }
-        .result-label { font-size: 11px; text-transform: uppercase; color: var(--text-sub); font-weight: bold; }
-        .result-value { font-size: 24px; font-weight: bold; color: var(--accent); font-family: monospace; margin: 6px 0; }
-        .result-sub { font-size: 13px; color: var(--text-muted); }
+        /* Numpad & Layout Display Kalkulator Asal */
+        .display-screen { background: var(--bg-input); border: 1px solid var(--border-sub); border-radius: 14px; padding: 16px; margin-bottom: 16px; text-align: right; }
+        .screen-label { font-size: 11px; color: var(--text-sub); font-weight: bold; text-transform: uppercase; text-align: left; margin-bottom: 4px; }
+        .screen-value { font-size: 28px; font-weight: bold; color: var(--accent); font-family: monospace; word-break: break-all; }
+        .screen-sub { font-size: 12px; color: var(--text-muted); margin-top: 4px; }
+
+        .input-selection { display: flex; gap: 8px; margin-bottom: 16px; }
+        .field-btn { flex: 1; padding: 10px; background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-muted); border-radius: 10px; font-size: 11px; font-weight: bold; cursor: pointer; text-align: center; }
+        .field-btn.active { border-color: var(--accent); color: var(--accent); background: rgba(56, 189, 248, 0.1); }
+
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+        .num-btn { background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-main); font-size: 18px; font-weight: bold; padding: 16px; border-radius: 12px; cursor: pointer; transition: 0.1s; }
+        .num-btn:active { background: var(--border-sub); transform: scale(0.96); }
+        .num-btn.action { color: #f87171; }
+        .num-btn.confirm { background: var(--accent); color: #0b0f19; grid-column: span 2; }
     </style>
 </head>
 <body>
@@ -82,29 +87,44 @@
         <a href="info.html" class="tab-btn">Info Pasaran</a>
     </div>
 
-    <div class="input-card">
-        <div class="form-group">
-            <label>Jumlah Modal (MYR)</label>
-            <input type="number" id="capitalMYR" placeholder="Contoh: 1000" oninput="calculate()">
-        </div>
-        <div class="form-group">
-            <label>Kadar Pertukaran USD/MYR</label>
-            <input type="number" id="exchangeRate" placeholder="4.45" value="4.45" step="0.01" oninput="calculate()">
-        </div>
-        <div class="form-group">
-            <label>Harga Sasaran Koin (USD)</label>
-            <input type="number" id="targetPriceUSD" placeholder="Contoh: 0.50" step="any" oninput="calculate()">
-        </div>
+    <div class="display-screen">
+        <div class="screen-label" id="activeFieldLabel">Modal (MYR)</div>
+        <div class="screen-value" id="activeFieldValue">0</div>
+        <div class="screen-sub" id="calcSummarySub">Hasil: 0.00 Koin (Modal: $0.00 USD)</div>
     </div>
 
-    <div class="result-card">
-        <div class="result-label">Anggaran Koin Yang Diperolehi</div>
-        <div class="result-value" id="coinResult">0.00</div>
-        <div class="result-sub" id="usdCapitalSub">Modal USD: $0.00 USD</div>
+    <div class="input-selection">
+        <button class="field-btn active" id="btnFieldMYR" onclick="selectField('MYR')">Modal (MYR)</button>
+        <button class="field-btn" id="btnFieldRate" onclick="selectField('RATE')">Kadar USD/MYR</button>
+        <button class="field-btn" id="btnFieldTarget" onclick="selectField('TARGET')">Harga Koin ($)</button>
+    </div>
+
+    <div class="numpad">
+        <button class="num-btn" onclick="appendNum('7')">7</button>
+        <button class="num-btn" onclick="appendNum('8')">8</button>
+        <button class="num-btn" onclick="appendNum('9')">9</button>
+        <button class="num-btn" onclick="appendNum('4')">4</button>
+        <button class="num-btn" onclick="appendNum('5')">5</button>
+        <button class="num-btn" onclick="appendNum('6')">6</button>
+        <button class="num-btn" onclick="appendNum('1')">1</button>
+        <button class="num-btn" onclick="appendNum('2')">2</button>
+        <button class="num-btn" onclick="appendNum('3')">3</button>
+        <button class="num-btn" onclick="appendNum('.')">.</button>
+        <button class="num-btn" onclick="appendNum('0')">0</button>
+        <button class="num-btn action" onclick="clearActive()">C</button>
+        <button class="num-btn action" onclick="backspace()">⌫</button>
+        <button class="num-btn confirm" onclick="nextField()">Seterusnya ➔</button>
     </div>
 </div>
 
 <script>
+let activeField = 'MYR';
+let inputs = {
+    MYR: '1000',
+    RATE: '4.45',
+    TARGET: '0.50'
+};
+
 function toggleTheme() {
     document.body.classList.toggle('light-mode');
     const isLight = document.body.classList.contains('light-mode');
@@ -117,36 +137,83 @@ if (localStorage.getItem('themePreference') === 'light') {
     document.getElementById('themeBtn').innerText = '🌙';
 }
 
+function updateDisplay() {
+    document.getElementById('activeFieldValue').innerText = inputs[activeField] || '0';
+    
+    const myr = parseFloat(inputs.MYR) || 0;
+    const rate = parseFloat(inputs.RATE) || 4.45;
+    const target = parseFloat(inputs.TARGET) || 0;
+
+    const usd = myr / rate;
+    const coins = target > 0 ? (usd / target) : 0;
+
+    document.getElementById('calcSummarySub').innerText = 
+        `Hasil: ${coins.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})} Koin (Modal: $${usd.toFixed(2)} USD)`;
+}
+
+function selectField(field) {
+    activeField = field;
+    document.querySelectorAll('.field-btn').forEach(btn => btn.classList.remove('active'));
+    
+    if (field === 'MYR') {
+        document.getElementById('btnFieldMYR').classList.add('active');
+        document.getElementById('activeFieldLabel').innerText = 'Modal (MYR)';
+    } else if (field === 'RATE') {
+        document.getElementById('btnFieldRate').classList.add('active');
+        document.getElementById('activeFieldLabel').innerText = 'Kadar Pertukaran USD/MYR';
+    } else if (field === 'TARGET') {
+        document.getElementById('btnFieldTarget').classList.add('active');
+        document.getElementById('activeFieldLabel').innerText = 'Harga Sasaran Koin (USD)';
+    }
+    updateDisplay();
+}
+
+function appendNum(num) {
+    if (inputs[activeField] === '0' && num !== '.') {
+        inputs[activeField] = num;
+    } else {
+        if (num === '.' && inputs[activeField].includes('.')) return;
+        inputs[activeField] += num;
+    }
+    updateDisplay();
+}
+
+function clearActive() {
+    inputs[activeField] = '0';
+    updateDisplay();
+}
+
+function backspace() {
+    let str = inputs[activeField];
+    if (str.length > 1) {
+        inputs[activeField] = str.slice(0, -1);
+    } else {
+        inputs[activeField] = '0';
+    }
+    updateDisplay();
+}
+
+function nextField() {
+    if (activeField === 'MYR') selectField('RATE');
+    else if (activeField === 'RATE') selectField('TARGET');
+    else if (activeField === 'TARGET') selectField('MYR');
+}
+
 async function fetchExchangeRate() {
     try {
         const res = await fetch('https://open.er-api.com/v6/latest/USD');
         if (res.ok) {
             const data = await res.json();
             if (data?.rates?.MYR) {
-                document.getElementById('exchangeRate').value = data.rates.MYR.toFixed(2);
-                calculate();
+                inputs.RATE = data.rates.MYR.toFixed(2);
+                updateDisplay();
             }
         }
     } catch (e) {}
 }
 
-function calculate() {
-    const myr = parseFloat(document.getElementById('capitalMYR').value) || 0;
-    const rate = parseFloat(document.getElementById('exchangeRate').value) || 4.45;
-    const targetPrice = parseFloat(document.getElementById('targetPriceUSD').value) || 0;
-
-    const usdCapital = myr / rate;
-    document.getElementById('usdCapitalSub').innerText = `Modal USD: $${usdCapital.toFixed(2)} USD`;
-
-    if (targetPrice > 0 && usdCapital > 0) {
-        const coins = usdCapital / targetPrice;
-        document.getElementById('coinResult').innerText = coins.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4});
-    } else {
-        document.getElementById('coinResult').innerText = '0.00';
-    }
-}
-
 fetchExchangeRate();
+updateDisplay();
 
 if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('service-worker.js');
