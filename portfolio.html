@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FinCrypto Suite - Portfolio Saya</title>
+    <link rel="manifest" href="manifest.json">
+    <meta name="theme-color" content="#0b0f19">
+    <style>
+        :root {
+            --bg-body: #0b0f19;
+            --bg-card: #161e2e;
+            --bg-input: #0f172a;
+            --border-color: #243044;
+            --border-sub: #1e293b;
+            --text-main: #f8fafc;
+            --text-sub: #64748b;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --accent-hover: #0284c7;
+        }
+
+        body.light-mode {
+            --bg-body: #f1f5f9;
+            --bg-card: #ffffff;
+            --bg-input: #f8fafc;
+            --border-color: #cbd5e1;
+            --border-sub: #e2e8f0;
+            --text-main: #0f172a;
+            --text-sub: #64748b;
+            --text-muted: #475569;
+            --accent: #0284c7;
+            --accent-hover: #0369a1;
+        }
+
+        * { box-sizing: border-box; font-family: 'Segoe UI', system-ui, sans-serif; margin: 0; padding: 0; }
+        body { background: var(--bg-body); color: var(--text-main); min-height: 100vh; padding: 20px; display: flex; justify-content: center; align-items: center; }
+        
+        .container { background: var(--bg-card); border: 1px solid var(--border-color); width: 100%; max-width: 520px; border-radius: 20px; padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.3); }
+        .header { text-align: center; margin-bottom: 16px; position: relative; }
+        .header h1 { font-size: 22px; color: var(--accent); text-transform: uppercase; letter-spacing: 1.5px; }
+        .header p { font-size: 12px; color: var(--text-sub); margin-top: 4px; }
+
+        .theme-toggle-btn { position: absolute; right: 0; top: 0; background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-main); padding: 6px 10px; border-radius: 8px; font-size: 12px; cursor: pointer; font-weight: bold; }
+
+        .nav-tabs { display: flex; background: var(--bg-input); border-radius: 10px; border: 1px solid var(--border-sub); padding: 4px; margin-bottom: 16px; }
+        .tab-btn { flex: 1; padding: 10px; border: none; background: transparent; color: var(--text-muted); font-weight: bold; font-size: 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: center; text-decoration: none; }
+        .tab-btn.active { background: var(--accent); color: #0b0f19; }
+
+        .input-card { background: var(--bg-input); border: 1px solid var(--border-sub); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-size: 11px; color: var(--text-sub); font-weight: bold; text-transform: uppercase; margin-bottom: 6px; }
+        
+        input[type="number"], select { width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px; border-radius: 8px; font-size: 15px; outline: none; }
+        
+        .price-input-group { display: flex; gap: 8px; }
+        .price-input-group input { flex: 1; }
+        .price-input-group select { width: 90px; }
+
+        .portfolio-summary { background: linear-gradient(135deg, var(--accent-hover), var(--bg-input)); border-radius: 14px; padding: 18px; margin-bottom: 16px; border: 1px solid var(--accent); }
+        .summary-label { font-size: 11px; text-transform: uppercase; color: #cbd5e1; font-weight: bold; }
+        .summary-value { font-size: 22px; font-weight: bold; color: #fff; font-family: monospace; margin: 4px 0; }
+        .summary-sub { font-size: 15px; color: #38bdf8; font-weight: 600; }
+        .summary-pnl { font-size: 12px; font-weight: bold; margin-top: 6px; font-family: monospace; }
+        
+        .port-item { background: var(--bg-input); border: 1px solid var(--border-sub); padding: 12px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+        .btn-add { width: 100%; padding: 12px; background: var(--accent-hover); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-delete { background: #ef4444; border: none; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; }
+
+        .port-actions { display: flex; gap: 8px; margin-bottom: 16px; }
+        .btn-secondary { background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-muted); padding: 8px 12px; border-radius: 6px; font-size: 11px; cursor: pointer; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn">☀️ Mod Terang</button>
+        <h1>FinCrypto Suite</h1>
+        <p>Pengurusan Portfolio &amp; P&amp;L</p>
+    </div>
+
+    <div class="nav-tabs">
+        <a href="index.html" class="tab-btn">Kalkulator</a>
+        <a href="portfolio.html" class="tab-btn active">Portfolio Saya</a>
+        <a href="info.html" class="tab-btn">Info Pasaran</a>
+    </div>
+
+    <div class="portfolio-summary">
+        <div class="summary-label">Nilai Portfolio Keseluruhan</div>
+        <div class="summary-value" id="totalPortUSD">$0.00 USD</div>
+        <div class="summary-sub" id="totalPortMYR">≈ RM 0.00 MYR</div>
+        <div class="summary-pnl" id="totalPortPnL">P&amp;L: $0.00 USD / RM 0.00 MYR (0.00%)</div>
+    </div>
+
+    <div class="input-card">
+        <div class="form-group">
+            <label>Pilih Koin</label>
+            <select id="portCoinSelect"></select>
+        </div>
+        <div class="form-group">
+            <label>Jumlah Pegangan</label>
+            <input type="number" id="portCoinAmount" placeholder="Contoh: 1500" min="0" step="any">
+        </div>
+        <div class="form-group">
+            <label>Harga Belian Purata &amp; Mata Wang</label>
+            <div class="price-input-group">
+                <input type="number" id="portCoinBuyPrice" placeholder="Contoh: 0.45 ATAU 2.10" min="0" step="any">
+                <select id="portCurrencySelect">
+                    <option value="USD">USD</option>
+                    <option value="MYR">MYR</option>
+                </select>
+            </div>
+        </div>
+        <button class="btn-add" onclick="addPortfolioItem()">Tambah Aset Simpanan</button>
+    </div>
+
+    <div class="port-actions">
+        <button class="btn-secondary" style="flex:1;" onclick="exportPortfolio()">📥 Eksport Backup</button>
+        <button class="btn-secondary" style="flex:1;" onclick="document.getElementById('importFileInput').click()">📤 Import Backup</button>
+        <input type="file" id="importFileInput" style="display:none;" accept=".json" onchange="importPortfolio(event)">
+    </div>
+
+    <span style="font-size:12px; font-weight:bold; color:var(--text-muted); text-transform:uppercase; display:block; margin-bottom:10px;">Senarai Pegangan Aset</span>
+    <div id="portfolioList">
+        <div style="text-align:center; color:var(--text-sub); font-size:13px; margin:20px 0;">Memuatkan portfolio...</div>
+    </div>
+</div>
+
+<script>
+const coinsList = [
+    { symbol: 'POL', geckoId: 'polygon-ecosystem-token' },
+    { symbol: 'ADA', geckoId: 'cardano' },
+    { symbol: 'BTC', geckoId: 'bitcoin' },
+    { symbol: 'ETH', geckoId: 'ethereum' },
+    { symbol: 'XRP', geckoId: 'ripple' },
+    { symbol: 'SOL', geckoId: 'solana' },
+    { symbol: 'DOT', geckoId: 'polkadot' },
+    { symbol: 'UNI', geckoId: 'uniswap' },
+    { symbol: 'LTC', geckoId: 'litecoin' },
+    { symbol: 'BCH', geckoId: 'bitcoin-cash' },
+    { symbol: 'AVAX', geckoId: 'avalanche-2' },
+    { symbol: 'NEAR', geckoId: 'near' },
+    { symbol: 'FTM', geckoId: 'fantom' },
+    { symbol: 'LINK', geckoId: 'chainlink' },
+    { symbol: 'DOGE', geckoId: 'dogecoin' },
+    { symbol: 'SHIB', geckoId: 'shiba-inu' },
+    { symbol: 'SUI', geckoId: 'sui' },
+    { symbol: 'APT', geckoId: 'aptos' },
+    { symbol: 'AAVE', geckoId: 'aave' }
+];
+
+let marketData = {};
+let usdToMyr = 4.45;
+let userPortfolio = JSON.parse(localStorage.getItem('userPortfolio')) || [];
+
+function toggleTheme() {
+    document.body.classList.toggle('light-mode');
+    const isLight = document.body.classList.contains('light-mode');
+    document.getElementById('themeBtn').innerText = isLight ? '🌙 Mod Gelap' : '☀️ Mod Terang';
+    localStorage.setItem('themePreference', isLight ? 'light' : 'dark');
+}
+
+if (localStorage.getItem('themePreference') === 'light') {
+    document.body.classList.add('light-mode');
+    document.getElementById('themeBtn').innerText = '🌙 Mod Gelap';
+}
+
+function initDropdowns() {
+    const portSelect = document.getElementById('portCoinSelect');
+    portSelect.innerHTML = '';
+    coinsList.forEach(coin => portSelect.add(new Option(coin.symbol, coin.symbol)));
+}
+
+async function fetchMarketData() {
+    try {
+        const myrRes = await fetch('https://open.er-api.com/v6/latest/USD');
+        if (myrRes.ok) {
+            const myrData = await myrRes.json();
+            if (myrData?.rates?.MYR) usdToMyr = myrData.rates.MYR;
+        }
+    } catch (e) {}
+
+    try {
+        const ids = coinsList.map(c => c.geckoId).join(',');
+        const res = await fetch(`https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${ids}`);
+        const data = await res.json();
+        data.forEach(item => {
+            const coin = coinsList.find(c => c.geckoId === item.id);
+            if (coin) marketData[coin.symbol] = { priceUSD: item.current_price || 0 };
+        });
+        renderPortfolio();
+    } catch (err) {}
+}
+
+function addPortfolioItem() {
+    const symbol = document.getElementById('portCoinSelect').value;
+    const amount = parseFloat(document.getElementById('portCoinAmount').value);
+    const buyPrice = parseFloat(document.getElementById('portCoinBuyPrice').value) || 0;
+    const currency = document.getElementById('portCurrencySelect').value;
+
+    if (!amount || amount <= 0) return alert('Sila masukkan kuantiti yang sah.');
+
+    // Tukar ke USD jika input dibuat dalam MYR
+    const buyPriceUSD = currency === 'MYR' ? (buyPrice / usdToMyr) : buyPrice;
+
+    const existingIndex = userPortfolio.findIndex(item => item.symbol === symbol);
+    if (existingIndex > -1) {
+        userPortfolio[existingIndex].amount += amount;
+        if (buyPrice > 0) userPortfolio[existingIndex].buyPriceUSD = buyPriceUSD;
+    } else {
+        userPortfolio.push({ symbol, amount, buyPriceUSD });
+    }
+
+    localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
+    document.getElementById('portCoinAmount').value = '';
+    document.getElementById('portCoinBuyPrice').value = '';
+    renderPortfolio();
+}
+
+function deletePortfolioItem(symbol) {
+    userPortfolio = userPortfolio.filter(item => item.symbol !== symbol);
+    localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
+    renderPortfolio();
+}
+
+function renderPortfolio() {
+    const listEl = document.getElementById('portfolioList');
+    let grandTotalUSD = 0;
+    let totalCostUSD = 0;
+
+    if (userPortfolio.length === 0) {
+        listEl.innerHTML = '<div style="text-align:center; color:var(--text-sub); font-size:13px; margin:20px 0;">Tiada simpanan direkodkan lagi.</div>';
+        document.getElementById('totalPortUSD').innerText = '$0.00 USD';
+        document.getElementById('totalPortMYR').innerText = '≈ RM 0.00 MYR';
+        document.getElementById('totalPortPnL').innerText = 'P&L: $0.00 USD / RM 0.00 MYR (0.00%)';
+        return;
+    }
+
+    listEl.innerHTML = '';
+    userPortfolio.forEach(item => {
+        const coinPriceUSD = marketData[item.symbol]?.priceUSD || 0;
+        const totalValueUSD = item.amount * coinPriceUSD;
+        const totalValueMYR = totalValueUSD * usdToMyr;
+        grandTotalUSD += totalValueUSD;
+
+        let buyPriceUSD = item.buyPriceUSD || 0;
+        let buyPriceMYR = buyPriceUSD * usdToMyr;
+        let itemCostUSD = item.amount * buyPriceUSD;
+        totalCostUSD += itemCostUSD;
+
+        let pnlText = '';
+        if (buyPriceUSD > 0) {
+            let itemPnLUSD = totalValueUSD - itemCostUSD;
+            let itemPnLMYR = itemPnLUSD * usdToMyr;
+            let itemPnLPct = (itemPnLUSD / itemCostUSD) * 100;
+            let isPos = itemPnLUSD >= 0;
+            
+            pnlText = `<div style="font-size:11px; font-weight:bold; color:${isPos ? '#4ade80' : '#f87171'}; margin-top:2px;">
+                P&L: ${isPos ? '+' : ''}$${itemPnLUSD.toFixed(2)} USD / ${isPos ? '+' : ''}RM ${itemPnLMYR.toFixed(2)} MYR (${isPos ? '+' : ''}${itemPnLPct.toFixed(2)}%)
+            </div>`;
+        }
+
+        listEl.innerHTML += `
+            <div class="port-item">
+                <div>
+                    <div style="font-weight:bold; font-size:14px; color:var(--text-main);">${item.symbol}</div>
+                    <div style="font-size:11px; color:var(--text-sub);">${item.amount.toLocaleString()} ${item.symbol}</div>
+                    ${buyPriceUSD > 0 ? `<div style="font-size:10px; color:var(--text-muted);">Belian: $${buyPriceUSD.toFixed(4)} USD / RM ${buyPriceMYR.toFixed(4)} MYR</div>` : ''}
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-weight:bold; font-size:14px; color:var(--accent);">$${totalValueUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD</div>
+                    <div style="font-size:11px; color:#38bdf8; font-weight:600;">≈ RM ${totalValueMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} MYR</div>
+                    ${pnlText}
+                    <button class="btn-delete" style="margin-top:6px;" onclick="deletePortfolioItem('${item.symbol}')">Padam</button>
+                </div>
+            </div>
+        `;
+    });
+
+    const grandTotalMYR = grandTotalUSD * usdToMyr;
+    document.getElementById('totalPortUSD').innerText = `$${grandTotalUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
+    document.getElementById('totalPortMYR').innerText = `≈ RM ${grandTotalMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} MYR`;
+
+    if (totalCostUSD > 0) {
+        let totalPnLUSD = grandTotalUSD - totalCostUSD;
+        let totalPnLMYR = totalPnLUSD * usdToMyr;
+        let totalPnLPct = (totalPnLUSD / totalCostUSD) * 100;
+        let isPos = totalPnLUSD >= 0;
+        const pnlEl = document.getElementById('totalPortPnL');
+        pnlEl.innerText = `P&L Keseluruhan: ${isPos ? '+' : ''}$${totalPnLUSD.toFixed(2)} USD / ${isPos ? '+' : ''}RM ${totalPnLMYR.toFixed(2)} MYR (${isPos ? '+' : ''}${totalPnLPct.toFixed(2)}%)`;
+        pnlEl.style.color = isPos ? '#4ade80' : '#f87171';
+    } else {
+        document.getElementById('totalPortPnL').innerText = 'Masukkan harga belian purata untuk mengira P&L.';
+        document.getElementById('totalPortPnL').style.color = 'var(--text-muted)';
+    }
+}
+
+function exportPortfolio() {
+    if (userPortfolio.length === 0) return alert('Portfolio kosong.');
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(userPortfolio, null, 2));
+    const dlAnchor = document.createElement('a');
+    dlAnchor.setAttribute("href", dataStr);
+    dlAnchor.setAttribute("download", `fincrypto_portfolio_${new Date().toISOString().slice(0,10)}.json`);
+    document.body.appendChild(dlAnchor);
+    dlAnchor.click();
+    dlAnchor.remove();
+}
+
+function importPortfolio(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = function(e) {
+        try {
+            const importedData = JSON.parse(e.target.result);
+            if (Array.isArray(importedData)) {
+                userPortfolio = importedData;
+                localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
+                renderPortfolio();
+                alert('Portfolio berjaya diimport!');
+            }
+        } catch (err) {
+            alert('Ralat semasa membaca fail backup.');
+        }
+    };
+    reader.readAsText(file);
+}
+
+initDropdowns();
+fetchMarketData();
+</script>
+
+</body>
+</html>
