@@ -201,7 +201,6 @@ function addPortfolioItem() {
 
     if (!amount || amount <= 0) return alert('Sila masukkan kuantiti yang sah.');
 
-    // Tukar ke USD jika input dibuat dalam MYR
     const buyPriceUSD = currency === 'MYR' ? (buyPrice / usdToMyr) : buyPrice;
 
     const existingIndex = userPortfolio.findIndex(item => item.symbol === symbol);
