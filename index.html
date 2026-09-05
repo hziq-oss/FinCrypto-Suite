@@ -46,11 +46,12 @@
         .header h1 { font-size: 20px; color: var(--accent); text-transform: uppercase; letter-spacing: 1px; line-height: 1.2; }
         .header p { font-size: 11px; color: var(--text-sub); margin-top: 2px; }
 
+        .header-btns { display: flex; gap: 8px; }
         .theme-toggle-btn { background: var(--bg-input); border: 1px solid var(--border-sub); color: var(--text-main); width: 36px; height: 36px; border-radius: 50%; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; transition: transform 0.2s; }
         .theme-toggle-btn:active { transform: scale(0.9); }
 
         .nav-tabs { display: flex; background: var(--bg-input); border-radius: 10px; border: 1px solid var(--border-sub); padding: 4px; margin-bottom: 16px; gap: 2px; }
-        .tab-btn { flex: 1; padding: 10px 6px; border: none; background: transparent; color: var(--text-muted); font-weight: bold; font-size: 11px; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: center; white-space: nowrap; }
+        .tab-btn { flex: 1; padding: 10px 4px; border: none; background: transparent; color: var(--text-muted); font-weight: bold; font-size: 10px; border-radius: 8px; cursor: pointer; transition: 0.2s; text-align: center; white-space: nowrap; }
         .tab-btn.active { background: var(--accent); color: #0b0f19; }
 
         .page-content { display: none; }
@@ -80,7 +81,7 @@
         .search-box { margin-bottom: 12px; }
 
         .crypto-list { display: flex; flex-direction: column; gap: 10px; }
-        .crypto-item { background: var(--bg-input); border: 1px solid var(--border-sub); padding: 14px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; cursor: pointer; }
+        .crypto-item { background: var(--bg-input); border: 1px solid var(--border-sub); padding: 14px; border-radius: 12px; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; cursor: pointer; position: relative; }
         .crypto-item:hover { transform: translateY(-2px); border-color: var(--accent); }
         .crypto-item.selected { border-color: var(--accent); background: var(--bg-card); box-shadow: 0 0 12px rgba(56, 189, 248, 0.25); }
         
@@ -139,10 +140,13 @@
         .alert-badge { font-size: 9px; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-left: 6px; text-transform: uppercase; display: inline-block; }
         .badge-profit { background: rgba(74, 222, 128, 0.2); color: #4ade80; border: 1px solid #4ade80; }
         .badge-risk { background: rgba(248, 113, 113, 0.2); color: #f87171; border: 1px solid #f87171; }
+        .badge-sector { background: rgba(56, 189, 248, 0.15); color: var(--accent); border: 1px solid var(--accent); font-size: 8px; }
 
         .port-filter-row { display: flex; gap: 8px; margin-bottom: 12px; }
         .port-filter-row input { flex: 1; font-size: 12px; padding: 8px 10px; }
         .port-filter-row select { width: 130px; font-size: 12px; padding: 8px 10px; }
+
+        .sector-pill { display: inline-block; font-size: 10px; font-weight: bold; padding: 2px 8px; border-radius: 12px; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-muted); margin-right: 4px; margin-bottom: 4px; }
 
         @media (max-width: 820px) {
             .app-wrapper { flex-direction: column; }
@@ -159,12 +163,16 @@
                 <h1>FinCrypto Suite</h1>
                 <p>Analisis Nisbah &amp; Portfolio Kripto</p>
             </div>
-            <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn" aria-label="Tukar Mod">☀️</button>
+            <div class="header-btns">
+                <button class="theme-toggle-btn" onclick="togglePrivacyMode()" id="privacyBtn" title="Sembunyi/Papar Nilai">👁️</button>
+                <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeBtn" title="Tukar Mod Tema">☀️</button>
+            </div>
         </div>
 
         <div class="nav-tabs">
-            <button class="tab-btn active" id="tab-calculatorPage" onclick="switchPage('calculatorPage', this)">Kalkulator &amp; Ranking</button>
-            <button class="tab-btn" id="tab-portfolioPage" onclick="switchPage('portfolioPage', this)">Portfolio Saya</button>
+            <button class="tab-btn active" id="tab-calculatorPage" onclick="switchPage('calculatorPage', this)">Kalkulator</button>
+            <button class="tab-btn" id="tab-portfolioPage" onclick="switchPage('portfolioPage', this)">Portfolio</button>
+            <button class="tab-btn" id="tab-dcaPage" onclick="switchPage('dcaPage', this)">DCA &amp; TP</button>
             <button class="tab-btn" id="tab-infoPage" onclick="switchPage('infoPage', this)">Info Pasaran</button>
         </div>
 
@@ -224,6 +232,14 @@
                 </div>
             </div>
 
+            <div id="riskScoreCard" class="info-card" style="border-color: var(--accent); display:none;">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <div class="info-title" style="margin:0;">🛡️ Dynamic Risk Score</div>
+                    <div id="riskScoreValue" style="font-size:16px; font-weight:bold; color:var(--accent);">-- / 100</div>
+                </div>
+                <div id="riskScoreDesc" class="info-desc" style="margin-top:4px;">Memuatkan penilaian risiko...</div>
+            </div>
+
             <div class="input-card">
                 <div class="form-group">
                     <label>Pilih Koin</label>
@@ -268,10 +284,11 @@
             </div>
 
             <div class="port-actions">
-                <button class="btn-secondary" style="flex:1;" onclick="exportPortfolio()">📥 Backup</button>
+                <button class="btn-secondary" style="flex:1;" onclick="exportPortfolio()">📥 JSON</button>
+                <button class="btn-secondary" style="flex:1;" onclick="exportCSV()">📊 CSV</button>
                 <button class="btn-secondary" style="flex:1;" onclick="document.getElementById('importFileInput').click()">📤 Import</button>
-                <button class="btn-secondary" style="flex:1;" onclick="copyPortfolioSummary()">📋 Salin Teks</button>
-                <button class="btn-secondary" style="flex:1;" onclick="generatePortfolioCard()">📷 Kad Gambar</button>
+                <button class="btn-secondary" style="flex:1;" onclick="copyPortfolioSummary()">📋 Salin</button>
+                <button class="btn-secondary" style="flex:1;" onclick="generatePortfolioCard()">📷 Kad</button>
                 <input type="file" id="importFileInput" style="display:none;" accept=".json" onchange="importPortfolio(event)">
             </div>
 
@@ -289,6 +306,48 @@
 
             <div id="portfolioList">
                 <div class="status-msg">Tiada simpanan direkodkan lagi.</div>
+            </div>
+        </div>
+
+        <div class="page-content" id="dcaPage">
+            <div class="input-card">
+                <div class="info-title">📊 Kalkulator Pembelian Berganda (DCA Calculator)</div>
+                <div class="info-desc" style="margin-bottom:12px;">Kira anggaran harga purata (*Average Entry*) baru sebelum mengemas kini ke portfolio.</div>
+                
+                <div class="form-group">
+                    <label>Pegangan Semasa (Kuantiti &amp; Purata)</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="number" id="dcaExistAmount" placeholder="Kuantiti Semasa" step="any" oninput="calculateDCA()">
+                        <input type="number" id="dcaExistPrice" placeholder="Harga Purata ($)" step="any" oninput="calculateDCA()">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Pembelian Tambahan Baru</label>
+                    <div style="display:flex; gap:8px;">
+                        <input type="number" id="dcaNewAmount" placeholder="Kuantiti Baru" step="any" oninput="calculateDCA()">
+                        <input type="number" id="dcaNewPrice" placeholder="Harga Belian ($)" step="any" oninput="calculateDCA()">
+                    </div>
+                </div>
+                <div id="dcaResultBox" style="font-size:12px; font-weight:bold; color:var(--accent); margin-top:10px;">
+                    Sila masukkan nilai untuk mengira purata baharu.
+                </div>
+            </div>
+
+            <div class="input-card">
+                <div class="info-title">💰 Strategi Take-Profit (TP Units)</div>
+                <div class="info-desc" style="margin-bottom:12px;">Kira unit koin yang perlu dijual mengikut peratusan pegangan untuk mengunci keuntungan.</div>
+                
+                <div class="form-group">
+                    <label>Pilih Koin Pegangan</label>
+                    <select id="tpCoinSelect" onchange="calculateTP()"></select>
+                </div>
+                <div class="form-group">
+                    <label>Sasaran Harga Jualan ($ USD)</label>
+                    <input type="number" id="tpTargetPrice" placeholder="Contoh: 1.50" step="any" oninput="calculateTP()">
+                </div>
+                <div id="tpResultBox" style="font-size:12px; line-height:1.6; color:var(--text-main); margin-top:10px;">
+                    Pilih koin dan target harga untuk melihat jadual jualan TP.
+                </div>
             </div>
         </div>
 
@@ -355,25 +414,25 @@
 
 <script>
 const coinsList = [
-    { symbol: 'POL', name: 'Polygon', geckoId: 'polygon-ecosystem-token', binancePair: 'POLUSDT' },
-    { symbol: 'ADA', name: 'Cardano', geckoId: 'cardano', binancePair: 'ADAUSDT' },
-    { symbol: 'BTC', name: 'Bitcoin', geckoId: 'bitcoin', binancePair: 'BTCUSDT' },
-    { symbol: 'ETH', name: 'Ethereum', geckoId: 'ethereum', binancePair: 'ETHUSDT' },
-    { symbol: 'XRP', name: 'Ripple', geckoId: 'ripple', binancePair: 'XRPUSDT' },
-    { symbol: 'SOL', name: 'Solana', geckoId: 'solana', binancePair: 'SOLUSDT' },
-    { symbol: 'DOT', name: 'Polkadot', geckoId: 'polkadot', binancePair: 'DOTUSDT' },
-    { symbol: 'UNI', name: 'Uniswap', geckoId: 'uniswap', binancePair: 'UNIUSDT' },
-    { symbol: 'LTC', name: 'Litecoin', geckoId: 'litecoin', binancePair: 'LTCUSDT' },
-    { symbol: 'BCH', name: 'Bitcoin Cash', geckoId: 'bitcoin-cash', binancePair: 'BCHUSDT' },
-    { symbol: 'AVAX', name: 'Avalanche', geckoId: 'avalanche-2', binancePair: 'AVAXUSDT' },
-    { symbol: 'NEAR', name: 'NEAR Protocol', geckoId: 'near', binancePair: 'NEARUSDT' },
-    { symbol: 'FTM', name: 'Fantom', geckoId: 'fantom', binancePair: 'FTMUSDT' },
-    { symbol: 'LINK', name: 'Chainlink', geckoId: 'chainlink', binancePair: 'LINKUSDT' },
-    { symbol: 'DOGE', name: 'Dogecoin', geckoId: 'dogecoin', binancePair: 'DOGEUSDT' },
-    { symbol: 'SHIB', name: 'Shiba Inu', geckoId: 'shiba-inu', binancePair: 'SHIBUSDT' },
-    { symbol: 'SUI', name: 'Sui', geckoId: 'sui', binancePair: 'SUIUSDT' },
-    { symbol: 'APT', name: 'Aptos', geckoId: 'aptos', binancePair: 'APTUSDT' },
-    { symbol: 'AAVE', name: 'Aave', geckoId: 'aave', binancePair: 'AAVEUSDT' }
+    { symbol: 'POL', name: 'Polygon', geckoId: 'polygon-ecosystem-token', binancePair: 'POLUSDT', sector: 'Layer-1 / L2' },
+    { symbol: 'ADA', name: 'Cardano', geckoId: 'cardano', binancePair: 'ADAUSDT', sector: 'Layer-1' },
+    { symbol: 'BTC', name: 'Bitcoin', geckoId: 'bitcoin', binancePair: 'BTCUSDT', sector: 'Store of Value' },
+    { symbol: 'ETH', name: 'Ethereum', geckoId: 'ethereum', binancePair: 'ETHUSDT', sector: 'Layer-1' },
+    { symbol: 'XRP', name: 'Ripple', geckoId: 'ripple', binancePair: 'XRPUSDT', sector: 'PayFi' },
+    { symbol: 'SOL', name: 'Solana', geckoId: 'solana', binancePair: 'SOLUSDT', sector: 'Layer-1' },
+    { symbol: 'DOT', name: 'Polkadot', geckoId: 'polkadot', binancePair: 'DOTUSDT', sector: 'Layer-0' },
+    { symbol: 'UNI', name: 'Uniswap', geckoId: 'uniswap', binancePair: 'UNIUSDT', sector: 'DeFi' },
+    { symbol: 'LTC', name: 'Litecoin', geckoId: 'litecoin', binancePair: 'LTCUSDT', sector: 'Payments' },
+    { symbol: 'BCH', name: 'Bitcoin Cash', geckoId: 'bitcoin-cash', binancePair: 'BCHUSDT', sector: 'Payments' },
+    { symbol: 'AVAX', name: 'Avalanche', geckoId: 'avalanche-2', binancePair: 'AVAXUSDT', sector: 'Layer-1' },
+    { symbol: 'NEAR', name: 'NEAR Protocol', geckoId: 'near', binancePair: 'NEARUSDT', sector: 'Layer-1' },
+    { symbol: 'FTM', name: 'Fantom', geckoId: 'fantom', binancePair: 'FTMUSDT', sector: 'Layer-1' },
+    { symbol: 'LINK', name: 'Chainlink', geckoId: 'chainlink', binancePair: 'LINKUSDT', sector: 'Oracle' },
+    { symbol: 'DOGE', name: 'Dogecoin', geckoId: 'dogecoin', binancePair: 'DOGEUSDT', sector: 'Meme' },
+    { symbol: 'SHIB', name: 'Shiba Inu', geckoId: 'shiba-inu', binancePair: 'SHIBUSDT', sector: 'Meme' },
+    { symbol: 'SUI', name: 'Sui', geckoId: 'sui', binancePair: 'SUIUSDT', sector: 'Layer-1' },
+    { symbol: 'APT', name: 'Aptos', geckoId: 'aptos', binancePair: 'APTUSDT', sector: 'Layer-1' },
+    { symbol: 'AAVE', name: 'Aave', geckoId: 'aave', binancePair: 'AAVEUSDT', sector: 'DeFi' }
 ];
 
 const DONUT_COLORS = ['#38bdf8', '#4ade80', '#facc15', '#f87171', '#c084fc', '#fb923c', '#2dd4bf'];
@@ -385,6 +444,7 @@ let currentTimeframe = '24h';
 let activeSelectedSymbol = null;
 let userPortfolio = JSON.parse(localStorage.getItem('userPortfolio')) || [];
 let isPrimaryMYR = localStorage.getItem('isPrimaryMYR') === 'true';
+let isPrivacyMode = localStorage.getItem('isPrivacyMode') === 'true';
 
 let currentChartPoints = [];
 let chartInteractionBound = false;
@@ -399,6 +459,13 @@ function toggleTheme() {
 if (localStorage.getItem('themePreference') === 'light') {
     document.body.classList.add('light-mode');
     document.getElementById('themeBtn').innerText = '🌙';
+}
+
+function togglePrivacyMode() {
+    isPrivacyMode = !isPrivacyMode;
+    localStorage.setItem('isPrivacyMode', isPrivacyMode);
+    document.getElementById('privacyBtn').innerText = isPrivacyMode ? '🙈' : '👁️';
+    renderPortfolio();
 }
 
 function togglePrimaryCurrency() {
@@ -432,19 +499,23 @@ function initDropdowns() {
     const baseSelect = document.getElementById('baseCoin');
     const portSelect = document.getElementById('portCoinSelect');
     const targetSelect = document.getElementById('targetCoinSelect');
+    const tpSelect = document.getElementById('tpCoinSelect');
     
     baseSelect.innerHTML = '';
     portSelect.innerHTML = '';
     targetSelect.innerHTML = '';
+    tpSelect.innerHTML = '';
 
     coinsList.forEach((coin) => {
         const isDefault = coin.symbol === 'POL';
         baseSelect.add(new Option(`${coin.symbol} - ${coin.name}`, coin.symbol, isDefault, isDefault));
         portSelect.add(new Option(`${coin.symbol} - ${coin.name}`, coin.symbol));
         targetSelect.add(new Option(`${coin.symbol} - ${coin.name}`, coin.symbol));
+        tpSelect.add(new Option(`${coin.symbol} - ${coin.name}`, coin.symbol));
     });
 
     document.getElementById('currencyToggleBtn').innerText = `Utama: ${isPrimaryMYR ? 'MYR' : 'USD'}`;
+    document.getElementById('privacyBtn').innerText = isPrivacyMode ? '🙈' : '👁️';
 }
 
 async function fetchFearAndGreedIndex() {
@@ -540,6 +611,7 @@ async function fetchMarketData() {
     renderPortfolio();
     updateInfoTab();
     calculateTargetProfit();
+    calculateTP();
     fetchFearAndGreedIndex();
 }
 
@@ -586,7 +658,8 @@ function kiraTukaran() {
                 name: coin.name,
                 convertedAmount: convertedAmount,
                 rate: rate,
-                relativeGrowth: relativeGrowth
+                relativeGrowth: relativeGrowth,
+                sector: coin.sector
             });
         }
     });
@@ -605,16 +678,25 @@ function kiraTukaran() {
         const colorClass = isPos ? 'positive' : 'negative';
         const isSelected = activeSelectedSymbol === item.symbol ? 'selected' : '';
 
+        let swapBadge = '';
+        if (item.relativeGrowth >= 25) {
+            swapBadge = `<span class="alert-badge badge-profit" style="margin-top:4px;">💡 HIGH SWAP VALUE</span>`;
+        } else if (item.relativeGrowth <= -25) {
+            swapBadge = `<span class="alert-badge badge-risk" style="margin-top:4px;">⚠️ LOW SWAP VALUE</span>`;
+        }
+
         const itemHTML = `
             <div class="crypto-item ${isSelected}" onclick="selectCard('${baseSymbol}', '${item.symbol}', this)">
                 <div class="crypto-info">
                     <div class="crypto-pair">${baseSymbol} → ${item.symbol}</div>
                     <div class="crypto-details">1 ${baseSymbol} = ${item.rate.toFixed(6)} ${item.symbol}</div>
+                    <div style="margin-top:4px;"><span class="sector-pill">${item.sector}</span></div>
                 </div>
                 <div class="crypto-value">
                     <div class="converted-amount">${item.convertedAmount.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 4})} ${item.symbol}</div>
                     <div class="fiat-value">≈ $${totalUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD / RM ${totalMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</div>
                     <div class="growth-badge ${colorClass}">${growthFormatted} Nisbah (${currentTimeframe.toUpperCase()})</div>
+                    ${swapBadge}
                 </div>
             </div>
         `;
@@ -882,6 +964,7 @@ function addPortfolioItem() {
     checkEditMode();
     renderPortfolio();
     calculateTargetProfit();
+    calculateTP();
 }
 
 function deletePortfolioItem(symbol) {
@@ -890,6 +973,7 @@ function deletePortfolioItem(symbol) {
     checkEditMode();
     renderPortfolio();
     calculateTargetProfit();
+    calculateTP();
 }
 
 function renderPortfolio() {
@@ -902,17 +986,19 @@ function renderPortfolio() {
 
     if (userPortfolio.length === 0) {
         listEl.innerHTML = '<div class="status-msg">Tiada simpanan direkodkan lagi.</div>';
-        document.getElementById('totalPortPrimary').innerText = isPrimaryMYR ? 'RM 0.00 MYR' : '$0.00 USD';
-        document.getElementById('totalPortSecondary').innerText = isPrimaryMYR ? '≈ $0.00 USD' : '≈ RM 0.00 MYR';
+        document.getElementById('totalPortPrimary').innerText = isPrivacyMode ? '****' : (isPrimaryMYR ? 'RM 0.00 MYR' : '$0.00 USD');
+        document.getElementById('totalPortSecondary').innerText = isPrivacyMode ? '****' : (isPrimaryMYR ? '≈ $0.00 USD' : '≈ RM 0.00 MYR');
         document.getElementById('totalPortPnL').innerText = 'P&L: $0.00 (0.00%)';
         document.getElementById('totalPortPnL').className = 'summary-pnl';
         document.getElementById('allocationBox').style.display = 'none';
+        document.getElementById('riskScoreCard').style.display = 'none';
         return;
     }
 
     let processedItems = [];
 
     userPortfolio.forEach(item => {
+        const coinInfo = coinsList.find(c => c.symbol === item.symbol);
         const coinPriceUSD = marketData[item.symbol]?.priceUSD || 0;
         const totalValueUSD = item.amount * coinPriceUSD;
         grandTotalUSD += totalValueUSD;
@@ -934,7 +1020,8 @@ function renderPortfolio() {
             buyPriceUSD,
             itemCostUSD,
             itemPnLUSD,
-            itemPnLPct
+            itemPnLPct,
+            sector: coinInfo ? coinInfo.sector : 'Lain-lain'
         });
     });
 
@@ -968,7 +1055,7 @@ function renderPortfolio() {
             let isPos = item.itemPnLUSD >= 0;
             
             pnlText = `<div style="font-size:11px; font-weight:bold; color:${isPos ? '#4ade80' : '#f87171'}; margin-top:2px;">
-                P&L: ${isPos ? '+' : ''}$${item.itemPnLUSD.toFixed(2)} USD (RM ${itemPnLMYR.toFixed(2)}) (${isPos ? '+' : ''}${item.itemPnLPct.toFixed(2)}%)
+                P&L: ${isPrivacyMode ? '****' : (isPos ? '+' : '') + '$' + item.itemPnLUSD.toFixed(2) + ' USD (' + (isPos ? '+' : '') + item.itemPnLPct.toFixed(2) + '%)'}
             </div>`;
 
             if (item.itemPnLPct >= 50) {
@@ -987,15 +1074,18 @@ function renderPortfolio() {
             }
         }
 
-        const primaryVal = isPrimaryMYR ? `RM ${totalValueMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} MYR` : `$${item.totalValueUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
-        const secondaryVal = isPrimaryMYR ? `≈ $${item.totalValueUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD` : `≈ RM ${totalValueMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} MYR`;
+        const primaryVal = isPrivacyMode ? '****' : (isPrimaryMYR ? `RM ${totalValueMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} MYR` : `$${item.totalValueUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`);
+        const secondaryVal = isPrivacyMode ? '****' : (isPrimaryMYR ? `≈ $${item.totalValueUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD` : `≈ RM ${totalValueMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} MYR`);
 
         listEl.innerHTML += `
             <div class="port-item">
                 <div>
                     <div style="font-weight:bold; font-size:14px; color:var(--text-main);">${item.symbol} ${badgeHtml}</div>
-                    <div style="font-size:11px; color:var(--text-sub);">${item.amount.toLocaleString()} ${item.symbol} ${buyPriceText}</div>
-                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">Harga Semasa: $${item.coinPriceUSD.toFixed(2)} USD (RM ${coinPriceMYR.toFixed(2)})</div>
+                    <div style="font-size:11px; color:var(--text-sub);">${isPrivacyMode ? '**** koin' : item.amount.toLocaleString() + ' ' + item.symbol} ${buyPriceText}</div>
+                    <div style="font-size:11px; color:var(--text-muted); margin-top:2px;">
+                        Harga: $${item.coinPriceUSD.toFixed(2)} USD (RM ${coinPriceMYR.toFixed(2)}) 
+                        <span class="alert-badge badge-sector">${item.sector}</span>
+                    </div>
                 </div>
                 <div style="text-align:right;">
                     <div style="font-weight:bold; font-size:14px; color:var(--accent);">${primaryVal}</div>
@@ -1012,7 +1102,10 @@ function renderPortfolio() {
 
     const grandTotalMYR = grandTotalUSD * usdToMyr;
     
-    if (isPrimaryMYR) {
+    if (isPrivacyMode) {
+        document.getElementById('totalPortPrimary').innerText = '****';
+        document.getElementById('totalPortSecondary').innerText = '****';
+    } else if (isPrimaryMYR) {
         document.getElementById('totalPortPrimary').innerText = `RM ${grandTotalMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} MYR`;
         document.getElementById('totalPortSecondary').innerText = `≈ $${grandTotalUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD`;
     } else {
@@ -1027,14 +1120,64 @@ function renderPortfolio() {
         let isPos = totalPnLUSD >= 0;
         const pnlEl = document.getElementById('totalPortPnL');
         
-        pnlEl.innerText = `P&L Keseluruhan: ${isPos ? '+' : ''}$${totalPnLUSD.toFixed(2)} USD (RM ${totalPnLMYR.toFixed(2)}) (${isPos ? '+' : ''}${totalPnLPct.toFixed(2)}%)`;
-        pnlEl.style.color = isPos ? '#4ade80' : '#f87171';
+        if (isPrivacyMode) {
+            pnlEl.innerText = 'P&L Keseluruhan: ****';
+        } else {
+            pnlEl.innerText = `P&L Keseluruhan: ${isPos ? '+' : ''}$${totalPnLUSD.toFixed(2)} USD (RM ${totalPnLMYR.toFixed(2)}) (${isPos ? '+' : ''}${totalPnLPct.toFixed(2)}%)`;
+            pnlEl.style.color = isPos ? '#4ade80' : '#f87171';
+        }
     } else {
         document.getElementById('totalPortPnL').innerText = 'Masukkan harga belian purata untuk mengira P&L.';
         document.getElementById('totalPortPnL').style.color = 'var(--text-muted)';
     }
 
     renderDonutChart(itemValuesForDonut, grandTotalUSD);
+    calculateRiskScore(processedItems, grandTotalUSD);
+}
+
+function calculateRiskScore(items, totalUSD) {
+    const card = document.getElementById('riskScoreCard');
+    const valEl = document.getElementById('riskScoreValue');
+    const descEl = document.getElementById('riskScoreDesc');
+
+    if (!items || items.length === 0 || totalUSD <= 0) {
+        card.style.display = 'none';
+        return;
+    }
+
+    card.style.display = 'block';
+
+    let maxWeight = 0;
+    let memeWeight = 0;
+    items.forEach(i => {
+        let weight = (i.totalValueUSD / totalUSD) * 100;
+        if (weight > maxWeight) maxWeight = weight;
+        if (i.sector === 'Meme') memeWeight += weight;
+    });
+
+    let score = 100;
+    if (maxWeight > 50) score -= (maxWeight - 50);
+    if (memeWeight > 20) score -= (memeWeight - 20);
+    if (items.length < 3) score -= 15;
+
+    score = Math.max(10, Math.min(100, Math.round(score)));
+
+    let desc = '';
+    let color = '#22c55e';
+
+    if (score >= 80) {
+        desc = 'Portfolio sangat seimbang dan mempunyai kepelbagaian sektor yang baik.';
+    } else if (score >= 50) {
+        color = '#facc15';
+        desc = 'Kepelbagaian sederhana. Elakkan tumpuan aset terlalu tinggi pada satu koin/sektor.';
+    } else {
+        color = '#ef4444';
+        desc = 'Risiko tinggi! Portfolio terlalu terpusat pada satu koin atau aset berisiko tinggi (Meme).';
+    }
+
+    valEl.innerText = `${score} / 100`;
+    valEl.style.color = color;
+    descEl.innerText = desc;
 }
 
 function renderDonutChart(itemValues, totalUSD) {
@@ -1082,6 +1225,55 @@ function renderDonutChart(itemValues, totalUSD) {
             </div>
         `;
     });
+}
+
+function calculateDCA() {
+    const existAmount = parseFloat(document.getElementById('dcaExistAmount').value) || 0;
+    const existPrice = parseFloat(document.getElementById('dcaExistPrice').value) || 0;
+    const newAmount = parseFloat(document.getElementById('dcaNewAmount').value) || 0;
+    const newPrice = parseFloat(document.getElementById('dcaNewPrice').value) || 0;
+    const resEl = document.getElementById('dcaResultBox');
+
+    if (existAmount <= 0 || existPrice <= 0 || newAmount <= 0 || newPrice <= 0) {
+        resEl.innerText = 'Sila masukkan semua nilai kuantiti dan harga untuk mengira purata baharu.';
+        return;
+    }
+
+    const totalAmount = existAmount + newAmount;
+    const totalCost = (existAmount * existPrice) + (newAmount * newPrice);
+    const avgPrice = totalCost / totalAmount;
+
+    resEl.innerHTML = `
+        Kuantiti Baru: <strong>${totalAmount.toLocaleString()}</strong><br>
+        Harga Purata Baru: <span style="font-size:15px; color:#4ade80;">$${avgPrice.toFixed(4)} USD</span> (RM ${(avgPrice * usdToMyr).toFixed(4)})
+    `;
+}
+
+function calculateTP() {
+    const symbol = document.getElementById('tpCoinSelect').value;
+    const targetPrice = parseFloat(document.getElementById('tpTargetPrice').value) || 0;
+    const resEl = document.getElementById('tpResultBox');
+
+    const item = userPortfolio.find(i => i.symbol === symbol);
+
+    if (!item) {
+        resEl.innerHTML = `<span style="color:#f87171;">Anda belum mempunyai pegangan ${symbol} dalam portfolio.</span>`;
+        return;
+    }
+
+    if (targetPrice <= 0) {
+        resEl.innerText = 'Masukkan sasaran harga jualan untuk mengira agihan Take-Profit.';
+        return;
+    }
+
+    const totalUSD = item.amount * targetPrice;
+
+    resEl.innerHTML = `
+        Target Jualan: <strong>$${targetPrice.toFixed(2)} USD</strong> (RM ${(targetPrice * usdToMyr).toFixed(2)})<br>
+        • 25% TP (Ambil Modal): <strong>${(item.amount * 0.25).toLocaleString()} ${symbol}</strong> ≈ $${(totalUSD * 0.25).toFixed(2)} USD<br>
+        • 50% TP (Separuh Pegangan): <strong>${(item.amount * 0.50).toLocaleString()} ${symbol}</strong> ≈ $${(totalUSD * 0.50).toFixed(2)} USD<br>
+        • 100% TP (Jual Semua): <strong>${item.amount.toLocaleString()} ${symbol}</strong> ≈ $${totalUSD.toFixed(2)} USD
+    `;
 }
 
 function calculateTargetProfit() {
@@ -1166,10 +1358,10 @@ function generatePortfolioCard() {
 
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 28px monospace';
-    ctx.fillText(`$${totalUSD.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} USD`, 45, 125);
+    ctx.fillText(isPrivacyMode ? '****' : `$${totalUSD.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} USD`, 45, 125);
     ctx.fillStyle = '#38bdf8';
     ctx.font = '16px monospace';
-    ctx.fillText(`≈ RM ${(totalUSD * usdToMyr).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} MYR`, 45, 150);
+    ctx.fillText(isPrivacyMode ? '****' : `≈ RM ${(totalUSD * usdToMyr).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} MYR`, 45, 150);
 
     ctx.strokeStyle = '#1e293b';
     ctx.beginPath();
@@ -1186,12 +1378,12 @@ function generatePortfolioCard() {
 
         ctx.fillStyle = '#94a3b8';
         ctx.font = '13px system-ui';
-        ctx.fillText(`${item.amount.toLocaleString()} koin`, 120, y);
+        ctx.fillText(isPrivacyMode ? '**** koin' : `${item.amount.toLocaleString()} koin`, 120, y);
 
         ctx.fillStyle = '#38bdf8';
         ctx.font = 'bold 15px monospace';
         ctx.textAlign = 'right';
-        ctx.fillText(`$${valUSD.toFixed(2)} USD`, c.width - 45, y);
+        ctx.fillText(isPrivacyMode ? '****' : `$${valUSD.toFixed(2)} USD`, c.width - 45, y);
         ctx.textAlign = 'left';
 
         y += 30;
@@ -1216,11 +1408,11 @@ function copyPortfolioSummary() {
         const valMYR = valUSD * usdToMyr;
         grandUSD += valUSD;
 
-        text += `• *${item.symbol}*: ${item.amount.toLocaleString()} koin ≈ $${valUSD.toFixed(2)} USD (RM ${valMYR.toFixed(2)})\n`;
+        text += `• *${item.symbol}*: ${isPrivacyMode ? '****' : item.amount.toLocaleString() + ' koin'} ≈ ${isPrivacyMode ? '****' : '$' + valUSD.toFixed(2) + ' USD (RM ' + valMYR.toFixed(2) + ')'}\n`;
     });
 
     text += `---------------------------------\n`;
-    text += `💰 *Jumlah Keseluruhan*: $${grandUSD.toFixed(2)} USD (RM ${(grandUSD * usdToMyr).toFixed(2)})\n`;
+    text += `💰 *Jumlah Keseluruhan*: ${isPrivacyMode ? '****' : '$' + grandUSD.toFixed(2) + ' USD (RM ' + (grandUSD * usdToMyr).toFixed(2) + ')'}\n`;
     text += `🗓️ Dikemas kini: ${new Date().toLocaleDateString('ms-MY')}`;
 
     navigator.clipboard.writeText(text).then(() => {
@@ -1241,6 +1433,28 @@ function exportPortfolio() {
     dlAnchor.remove();
 }
 
+function exportCSV() {
+    if (userPortfolio.length === 0) return alert('Portfolio kosong.');
+
+    let csvContent = "data:text/csv;charset=utf-8,Symbol,Amount,BuyPrice,Currency,CurrentPriceUSD,TotalValueUSD,TotalValueMYR\n";
+
+    userPortfolio.forEach(item => {
+        const priceUSD = marketData[item.symbol]?.priceUSD || 0;
+        const totalUSD = item.amount * priceUSD;
+        const totalMYR = totalUSD * usdToMyr;
+        
+        csvContent += `${item.symbol},${item.amount},${item.buyPrice || 0},${item.currency || 'USD'},${priceUSD},${totalUSD.toFixed(2)},${totalMYR.toFixed(2)}\n`;
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `fincrypto_portfolio_${new Date().toISOString().slice(0,10)}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+}
+
 function importPortfolio(event) {
     const file = event.target.files[0];
     if (!file) return;
@@ -1255,6 +1469,7 @@ function importPortfolio(event) {
                 checkEditMode();
                 renderPortfolio();
                 calculateTargetProfit();
+                calculateTP();
                 alert('Portfolio berjaya diimport!');
             } else {
                 alert('Format fail JSON tidak sah.');
