@@ -65,6 +65,9 @@
         
         .port-item { background: var(--bg-input); border: 1px solid var(--border-sub); padding: 12px 14px; border-radius: 10px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
         .btn-add { width: 100%; padding: 12px; background: var(--accent-hover); color: white; border: none; border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 10px; }
+        .btn-cancel { width: 100%; padding: 8px; background: transparent; color: var(--text-sub); border: 1px solid var(--border-sub); border-radius: 8px; font-weight: bold; cursor: pointer; margin-top: 6px; display: none; }
+        
+        .btn-edit { background: var(--accent); border: none; color: #0b0f19; padding: 6px 10px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; margin-right: 4px; }
         .btn-delete { background: #ef4444; border: none; color: #fff; padding: 6px 10px; border-radius: 6px; font-size: 10px; cursor: pointer; font-weight: bold; }
 
         .port-actions { display: flex; gap: 8px; margin-bottom: 16px; }
@@ -112,7 +115,8 @@
                 </select>
             </div>
         </div>
-        <button class="btn-add" onclick="addPortfolioItem()">Tambah Aset Simpanan</button>
+        <button class="btn-add" id="btnAddPort" onclick="addPortfolioItem()">Tambah Aset Simpanan</button>
+        <button class="btn-cancel" id="btnCancelEdit" onclick="cancelEdit()">Batal Edit</button>
     </div>
 
     <div class="port-actions">
@@ -153,6 +157,7 @@ const coinsList = [
 let marketData = {};
 let usdToMyr = 4.45;
 let userPortfolio = JSON.parse(localStorage.getItem('userPortfolio')) || [];
+let editingSymbol = null;
 
 function toggleTheme() {
     document.body.classList.toggle('light-mode');
@@ -203,12 +208,23 @@ function addPortfolioItem() {
 
     const buyPriceUSD = currency === 'MYR' ? (buyPrice / usdToMyr) : buyPrice;
 
-    const existingIndex = userPortfolio.findIndex(item => item.symbol === symbol);
-    if (existingIndex > -1) {
-        userPortfolio[existingIndex].amount += amount;
-        if (buyPrice > 0) userPortfolio[existingIndex].buyPriceUSD = buyPriceUSD;
+    if (editingSymbol) {
+        const index = userPortfolio.findIndex(item => item.symbol === editingSymbol);
+        if (index > -1) {
+            userPortfolio[index] = { symbol, amount, buyPriceUSD };
+        }
+        editingSymbol = null;
+        document.getElementById('portCoinSelect').disabled = false;
+        document.getElementById('btnAddPort').innerText = 'Tambah Aset Simpanan';
+        document.getElementById('btnCancelEdit').style.display = 'none';
     } else {
-        userPortfolio.push({ symbol, amount, buyPriceUSD });
+        const existingIndex = userPortfolio.findIndex(item => item.symbol === symbol);
+        if (existingIndex > -1) {
+            userPortfolio[existingIndex].amount += amount;
+            if (buyPrice > 0) userPortfolio[existingIndex].buyPriceUSD = buyPriceUSD;
+        } else {
+            userPortfolio.push({ symbol, amount, buyPriceUSD });
+        }
     }
 
     localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
@@ -217,7 +233,37 @@ function addPortfolioItem() {
     renderPortfolio();
 }
 
+function editPortfolioItem(symbol) {
+    const item = userPortfolio.find(i => i.symbol === symbol);
+    if (!item) return;
+
+    editingSymbol = symbol;
+    document.getElementById('portCoinSelect').value = item.symbol;
+    document.getElementById('portCoinSelect').disabled = true;
+    document.getElementById('portCoinAmount').value = item.amount;
+    
+    const currency = document.getElementById('portCurrencySelect').value;
+    if (item.buyPriceUSD > 0) {
+        document.getElementById('portCoinBuyPrice').value = currency === 'MYR' ? (item.buyPriceUSD * usdToMyr).toFixed(4) : item.buyPriceUSD.toFixed(4);
+    } else {
+        document.getElementById('portCoinBuyPrice').value = '';
+    }
+
+    document.getElementById('btnAddPort').innerText = 'Kemaskini Aset Simpanan';
+    document.getElementById('btnCancelEdit').style.display = 'block';
+}
+
+function cancelEdit() {
+    editingSymbol = null;
+    document.getElementById('portCoinSelect').disabled = false;
+    document.getElementById('portCoinAmount').value = '';
+    document.getElementById('portCoinBuyPrice').value = '';
+    document.getElementById('btnAddPort').innerText = 'Tambah Aset Simpanan';
+    document.getElementById('btnCancelEdit').style.display = 'none';
+}
+
 function deletePortfolioItem(symbol) {
+    if (editingSymbol === symbol) cancelEdit();
     userPortfolio = userPortfolio.filter(item => item.symbol !== symbol);
     localStorage.setItem('userPortfolio', JSON.stringify(userPortfolio));
     renderPortfolio();
@@ -271,7 +317,10 @@ function renderPortfolio() {
                     <div style="font-weight:bold; font-size:14px; color:var(--accent);">$${totalValueUSD.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} USD</div>
                     <div style="font-size:11px; color:#38bdf8; font-weight:600;">≈ RM ${totalValueMYR.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})} MYR</div>
                     ${pnlText}
-                    <button class="btn-delete" style="margin-top:6px;" onclick="deletePortfolioItem('${item.symbol}')">Padam</button>
+                    <div style="margin-top:6px;">
+                        <button class="btn-edit" onclick="editPortfolioItem('${item.symbol}')">Edit</button>
+                        <button class="btn-delete" onclick="deletePortfolioItem('${item.symbol}')">Padam</button>
+                    </div>
                 </div>
             </div>
         `;
