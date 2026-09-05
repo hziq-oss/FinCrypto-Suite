@@ -66,7 +66,7 @@
         
         .input-with-currency { display: flex; gap: 8px; }
         .input-with-currency input { flex: 1; }
-        .input-with-currency select { width: 90px; flex-shrink: 0; font-weight: bold; }
+        .input-with-currency select { width: 95px; flex-shrink: 0; font-weight: bold; }
 
         input[type="number"], input[type="text"], select { width: 100%; background: var(--bg-card); border: 1px solid var(--border-color); color: var(--text-main); padding: 12px; border-radius: 8px; font-size: 15px; outline: none; transition: 0.2s; }
         input[type="number"]:focus, input[type="text"]:focus, select:focus { border-color: var(--accent); }
@@ -253,8 +253,14 @@
                     <select id="targetCoinSelect" onchange="calculateTargetProfit()"></select>
                 </div>
                 <div class="form-group">
-                    <label>Harga Sasaran (USD)</label>
-                    <input type="number" id="targetPriceInput" placeholder="Contoh: 2.50" step="any" oninput="calculateTargetProfit()">
+                    <label>Harga Sasaran &amp; Mata Wang</label>
+                    <div class="input-with-currency">
+                        <input type="number" id="targetPriceInput" placeholder="Contoh: 2.50 atau 10.00" step="any" oninput="calculateTargetProfit()">
+                        <select id="targetCurrencySelect" onchange="calculateTargetProfit()">
+                            <option value="USD">USD ($)</option>
+                            <option value="MYR">MYR (RM)</option>
+                        </select>
+                    </div>
                 </div>
                 <div id="targetResult" style="font-size:12px; font-weight:bold; color:var(--text-main); margin-top:8px; line-height:1.5;">
                     Masukkan harga sasaran untuk mengira potensi pulangan.
@@ -1080,7 +1086,8 @@ function renderDonutChart(itemValues, totalUSD) {
 
 function calculateTargetProfit() {
     const symbol = document.getElementById('targetCoinSelect').value;
-    const targetPrice = parseFloat(document.getElementById('targetPriceInput').value);
+    const targetInput = parseFloat(document.getElementById('targetPriceInput').value);
+    const selectedCurrency = document.getElementById('targetCurrencySelect').value;
     const resEl = document.getElementById('targetResult');
 
     const item = userPortfolio.find(i => i.symbol === symbol);
@@ -1090,13 +1097,20 @@ function calculateTargetProfit() {
         return;
     }
 
-    if (!targetPrice || targetPrice <= 0) {
+    if (!targetInput || targetInput <= 0) {
         resEl.innerText = 'Masukkan harga sasaran untuk mengira potensi pulangan.';
         return;
     }
 
-    const estTotalUSD = item.amount * targetPrice;
+    let targetPriceUSD = selectedCurrency === 'MYR' ? (targetInput / usdToMyr) : targetInput;
+    let targetPriceMYR = selectedCurrency === 'MYR' ? targetInput : (targetInput * usdToMyr);
+
+    const estTotalUSD = item.amount * targetPriceUSD;
     const estTotalMYR = estTotalUSD * usdToMyr;
+
+    const currentPriceUSD = marketData[symbol]?.priceUSD || 0;
+    let reqGrowthPct = currentPriceUSD > 0 ? (((targetPriceUSD - currentPriceUSD) / currentPriceUSD) * 100) : 0;
+    let growthSign = reqGrowthPct >= 0 ? '+' : '';
 
     let pnlHtml = '';
     if (item.buyPrice > 0) {
@@ -1111,8 +1125,9 @@ function calculateTargetProfit() {
     }
 
     resEl.innerHTML = `
-        Jika ${symbol} mencecah <strong>$${targetPrice.toFixed(2)} USD</strong>:<br>
-        Nilai Pegangan: <span style="color:var(--accent);">$${estTotalUSD.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} USD</span> (RM ${estTotalMYR.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})})
+        Jika ${symbol} mencecah <strong>$${targetPriceUSD.toFixed(2)} USD</strong> (RM ${targetPriceMYR.toFixed(2)}):<br>
+        Diperlukan dari harga semasa: <span style="color:var(--accent); font-weight:bold;">${growthSign}${reqGrowthPct.toFixed(2)}%</span><br>
+        Anggaran Nilai Pegangan: <span style="color:var(--accent); font-weight:bold;">$${estTotalUSD.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})} USD</span> (RM ${estTotalMYR.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})})
         ${pnlHtml}
     `;
 }
